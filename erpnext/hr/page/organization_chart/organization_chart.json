@@ -1,0 +1,26 @@
+{
+ "content": null, 
+ "creation": "2018-04-10 12:27:44.372520", 
+ "docstatus": 0, 
+ "doctype": "Page", 
+ "idx": 0, 
+ "modified": "2018-04-10 12:28:11.705966", 
+ "modified_by": "Administrator", 
+ "module": "HR", 
+ "name": "organization-chart", 
+ "owner": "Administrator", 
+ "page_name": "Organization Chart", 
+ "roles": [
+  {
+   "role": "System Manager"
+  }, 
+  {
+   "role": "HR Manager"
+  }
+ ], 
+ "script": null, 
+ "standard": "Yes", 
+ "style": null, 
+ "system_page": 0, 
+ "title": "Organization Chart"
+}

@@ -1,0 +1,17 @@
+﻿
+<div align="center">
+	<table border="0" width="300px" cellspacing="15" align="center">
+		<tr>
+			<td align="center"><b><font size="4">تحديد موقع العميل</font></b></td>
+		</tr>
+	</table>
+	<p></p>
+	<table border="0" width="300px"  cellspacing="15" bordercolor="#FFFFFF">
+{% for (var i=0, k=data.length; i<k; i++) { %}
+		<tr>
+			<td data-name="{%= data[i].customer %}" height="60px" width="100%" bgcolor="#9999FF" align="center" valign="middle" style="border: 7px solid #FFFFFF; display:block;cursor:pointer;" 
+			onclick="frappe.pages.customer_geo.check(this, 0)"><b><font size="4">{%= data[i].customer_name %}</font></b></td>
+		</tr>
+{% } %}
+	</table>
+</div>

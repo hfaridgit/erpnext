@@ -1,0 +1,47 @@
+﻿
+<div align="center">
+	<table border="0" width="300px" cellspacing="15" align="center">
+		<tr>
+			<td data-name="0" width="100px" align="center">
+			<img border="0" src="{% frappe.urllib.get_base_url() %}/assets/js/check_in.png" align="center" style="cursor:pointer;" 
+			onclick="window.check_type = 0;frappe.pages.bus_attendance.refresh();"></td>
+			<td width="100px"></td>
+			<td data-name="1" width="100px" align="center">
+			<img border="0" src="{% frappe.urllib.get_base_url() %}/assets/js/check_out.png" align="center" style="cursor:pointer;" 
+			onclick="window.check_type = 1;frappe.pages.bus_attendance.refresh();"></td>
+		</tr>
+		<tr>
+			<td align="center"><b><font size="4">دخول</font></b></td>
+			<td></td>
+			<td align="center"><b><font size="4">خروج</font></b></td>
+		</tr>
+	</table>
+	<p></p>
+	<table border="0" width="300px"  cellspacing="15" bordercolor="#FFFFFF">
+{% for (var i=0, k=data.length; i<k; i++) { %}
+		<tr>
+		{% if (window.check_type == 0 && !data[i].time_in) { %}
+			<td data-name="{%= data[i].route_name %}" height="60px" width="100%" bgcolor="#00FF00" align="center" valign="middle" style="border: 7px solid #FFFFFF; display:block;cursor:pointer;" 
+			onclick="frappe.pages.bus_attendance.check(this, 0)"><b><font size="4">{%= data[i].route_name %}</font>
+			</b><br clear="all"></font></b><font size="2">{%= data[i].time_in %}</font></td>
+		{% } %}
+		{% if (window.check_type == 1 && !data[i].time_out) { %}
+			<td data-name="{%= data[i].route_name %}" height="60px" width="100%" bgcolor="#F4353A" align="center" valign="middle" style="border: 7px solid #FFFFFF; display:block;cursor:pointer;" 
+			onclick="frappe.pages.bus_attendance.check(this, 1)"><b><font size="4">{%= data[i].route_name %}</font></b>
+			</b><br clear="all"></font></b><font size="2">{%= data[i].time_out %}</font></td>
+		{% } %}
+		{% if (window.check_type == 0 && data[i].time_in) { %}
+			<td height="60px" width="100%" bgcolor="#EFEFEF" align="center" valign="middle" style="border: 7px solid #FFFFFF; display:block;" >
+			<b><font size="4" color="#00CC00">{%= data[i].route_name %}</font></b>
+			</b><br clear="all"></font></b><font size="2">{%= data[i].time_in %}</font></td>
+		{% } %} 
+		{% if (window.check_type == 1 && data[i].time_out) { %}
+			<td height="60px" width="100%" bgcolor="#EFEFEF" align="center" valign="middle" style="border: 7px solid #FFFFFF; display:block;">
+			<b><font size="4" color="#F4353A">{%= data[i].route_name %}</font></b>
+			</b><br clear="all"></font></b><font size="2">{%= data[i].time_out %}</font></td>
+			
+		{% } %}
+		</tr>
+{% } %}
+	</table>
+</div>

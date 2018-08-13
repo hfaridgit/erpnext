@@ -1,0 +1,24 @@
+{
+ "add_total_row": 0, 
+ "apply_user_permissions": 1, 
+ "creation": "2018-04-14 19:54:11.655473", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "modified": "2018-04-14 20:03:15.173272", 
+ "modified_by": "Administrator", 
+ "module": "HR", 
+ "name": "Missed Holidays", 
+ "owner": "Administrator", 
+ "query": "select selected_date as 'Date::100', dayname(selected_date) as 'Description::300' from (\nselect adddate(concat(%(year)s, '-01-01'),t2*100 + t1*10 + t0) selected_date from \n (select 0 t0 union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t0,\n (select 0 t1 union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t1,\n (select 0 t2 union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t2) x\n where year(selected_date)=%(year)s and dayname(selected_date)=%(holiday_name)s \n and not selected_date in (select holiday_date from `tabHoliday` where parent=%(holiday_list)s)", 
+ "ref_doctype": "Holiday List", 
+ "report_name": "Missed Holidays", 
+ "report_type": "Query Report", 
+ "roles": [
+  {
+   "role": "HR Manager"
+  }
+ ]
+}

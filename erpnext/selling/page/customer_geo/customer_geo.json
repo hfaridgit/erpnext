@@ -1,0 +1,30 @@
+{
+ "content": null, 
+ "creation": "2018-05-07 22:53:27.960775", 
+ "docstatus": 0, 
+ "doctype": "Page", 
+ "icon": "icon-play", 
+ "idx": 0, 
+ "modified": "2018-05-07 22:53:27.960775", 
+ "modified_by": "Administrator", 
+ "module": "Selling", 
+ "name": "customer_geo", 
+ "owner": "Administrator", 
+ "page_name": "customer_geo", 
+ "roles": [
+  {
+   "role": "System Manager"
+  }, 
+  {
+   "role": "Sales Manager"
+  }, 
+  {
+   "role": "Sales User"
+  }
+ ], 
+ "script": null, 
+ "standard": "Yes", 
+ "style": null, 
+ "system_page": 0, 
+ "title": "Customer Geo"
+}

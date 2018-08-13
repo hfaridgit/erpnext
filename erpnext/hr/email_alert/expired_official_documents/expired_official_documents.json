@@ -1,0 +1,28 @@
+{
+ "attach_print": 0, 
+ "condition": "", 
+ "creation": "2018-05-04 16:34:15.932758", 
+ "date_changed": "notification_date", 
+ "days_in_advance": 1, 
+ "docstatus": 0, 
+ "doctype": "Email Alert", 
+ "document_type": "Official Documents", 
+ "enabled": 1, 
+ "event": "Days Before", 
+ "idx": 0, 
+ "is_standard": 1, 
+ "message": "<h3>{{_(\"Official Document\")}}</h3>\n\n<p>{{ doc.document_type }}</p>\n\n<h4>{{_(\"Details\")}}</h4>\n{{_(\"Document Number\")}}: {{ frappe.utils.get_link_to_form(doc.doctype, doc.name) }}\n<br>{{_(\"For Employee\")}}: {{ doc.employee_name }}\n<br>{{_(\"Will Expire On\")}}: {{ doc.expiry_date }}\n<br>{{ doc.description }}\n", 
+ "modified": "2018-05-14 22:26:08.411712", 
+ "modified_by": "Administrator", 
+ "module": "HR", 
+ "name": "Expired Official Documents", 
+ "owner": "Administrator", 
+ "recipients": [
+  {
+   "cc": "admin@etamifad.com", 
+   "email_by_document_field": "notify_user"
+  }
+ ], 
+ "subject": "Document: {{ doc.name }}", 
+ "value_changed": "expiry_date"
+}

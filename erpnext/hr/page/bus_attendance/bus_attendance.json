@@ -1,0 +1,30 @@
+{
+ "content": null, 
+ "creation": "2018-04-20 14:57:19.261213", 
+ "docstatus": 0, 
+ "doctype": "Page", 
+ "icon": "icon-play", 
+ "idx": 0, 
+ "modified": "2018-04-20 14:59:12.980676", 
+ "modified_by": "Administrator", 
+ "module": "HR", 
+ "name": "bus-attendance", 
+ "owner": "Administrator", 
+ "page_name": "Bus Attendance", 
+ "roles": [
+  {
+   "role": "System Manager"
+  }, 
+  {
+   "role": "HR Manager"
+  }, 
+  {
+   "role": "Bus Attendance"
+  }
+ ], 
+ "script": null, 
+ "standard": "Yes", 
+ "style": null, 
+ "system_page": 0, 
+ "title": "Bus Attendance"
+}
