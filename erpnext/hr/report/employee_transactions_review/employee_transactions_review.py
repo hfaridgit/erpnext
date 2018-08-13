@@ -30,7 +30,8 @@ def get_data(filters):
 							select e.company, e.business_unit, e.branch, et.name, et.docstatus, et.posting_date, et.day_name, et.employee, et.employee_name, ifnull(left(et.time_in,5),"___") as time_in, ifnull(left(et.time_out,5),"___") as time_out, 
 									ifnull(left(et.attendance_hours,5),"___") as attendance_hours, et.lateness_minutes as lateness_minutes2, et.overtime_minutes as overtime_minutes2, et.early_exit_minutes as early_exit_minutes2, 
 									ifnull(et.mission_application,"___") as mission_application,  if(et.bus_delay=1,'&#10003;','___') as bus_delay,  if(et.is_holiday=1,'&#10003;','___') as is_holiday, 
-									if(et.is_leave=1,'&#10003;','___') as is_leave,  ifnull(et.shift,"___") as shift, ifnull(et.leave_application ,"___") as leave_application, ifnull(et.permit_application,"___") as permit_application,  et.punishment,  
+									if(et.is_leave=1,'&#10003;','___') as is_leave,  ifnull(et.shift,"___") as shift, ifnull(et.leave_application ,"___") as leave_application, 
+									et.leave_type, ifnull(et.permit_application,"___") as permit_application, et.permit_hours,  et.punishment, et.punishment_name,  
 									if(et.half_day=1,'&#10003;','___') as half_day,  ifnull(left(et.bus_time_in,5),"___") as bus_time_in,  
 									if(et.ignore_lateness=1,'&#10003;','___') as ignore_lateness,  if(et.enable_overtime=1,'&#10003;','___') as enable_overtime, 
 									et.shift_late_time, e.image, et.transaction_year, et.transaction_month, et.lateness_minutes, et.overtime_minutes, et.early_exit_minutes  
@@ -210,6 +211,15 @@ def get_columns(filters):
 			"width": 120
 		},
 		{
+			"fieldname": "leave_type",
+			"label": _("Leave Type"),
+			"fieldtype": "Link",
+			"actualtype": "Data",
+			"options": "HHH",
+			"actualoptions": "",
+			"width": 120
+		},
+		{
 			"fieldname": "permit_application",
 			"label": _("Permit"),
 			"fieldtype": "Link",
@@ -219,10 +229,28 @@ def get_columns(filters):
 			"width": 120
 		},
 		{
+			"fieldname": "permit_hours",
+			"label": _("Permit Hours"),
+			"fieldtype": "Link",
+			"actualtype": "Data",
+			"options": "HHH",
+			"actualoptions": "",
+			"width": 120
+		},
+		{
 			"fieldname": "punishment",
 			"label": _("Punishment"),
 			"fieldtype": "Link",
 			"options": "Employee Punishment",
+			"width": 120
+		},
+		{
+			"fieldname": "punishment_name",
+			"label": _("Punishment Name"),
+			"fieldtype": "Link",
+			"actualtype": "Data",
+			"options": "HHH",
+			"actualoptions": "",
 			"width": 120
 		},
 		{

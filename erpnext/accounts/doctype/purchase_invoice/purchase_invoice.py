@@ -409,6 +409,8 @@ class PurchaseInvoice(BuyingController):
 							"remarks": self.get("remarks") or _("Accounting Entry for Stock"),
 							"cost_center": item.cost_center,
 							"business_unit": item.business_unit,
+							"against_voucher": item.asset if item.asset else None,
+							"against_voucher_type": "Asset" if item.asset else None,
 							"project": item.project
 						}, account_currency)
 					)
@@ -422,6 +424,8 @@ class PurchaseInvoice(BuyingController):
 							"remarks": self.get("remarks") or _("Accounting Entry for Stock"),
 							"credit": flt(item.landed_cost_voucher_amount),
 							"business_unit": item.business_unit,
+							"against_voucher": item.asset if item.asset else None,
+							"against_voucher_type": "Asset" if item.asset else None,
 							"project": item.project
 						}))
 
@@ -437,6 +441,8 @@ class PurchaseInvoice(BuyingController):
 							"cost_center": item.cost_center,
 							"remarks": self.get("remarks") or _("Accounting Entry for Stock"),
 							"business_unit": item.business_unit,
+							"against_voucher": item.asset if item.asset else None,
+							"against_voucher_type": "Asset" if item.asset else None,
 							"credit": flt(item.rm_supp_cost)
 						}, warehouse_account[self.supplier_warehouse]["account_currency"]))
 				else:
@@ -449,7 +455,9 @@ class PurchaseInvoice(BuyingController):
 								item.precision("base_net_amount")) if account_currency==self.company_currency
 								else flt(item.net_amount, item.precision("net_amount"))),
 							"cost_center": item.cost_center,
-							"business_unit": item.business_unit,
+							"business_unit": item.business_unit, 
+							"against_voucher": item.asset if item.asset else None,
+							"against_voucher_type": "Asset" if item.asset else None,
 							"project": item.project
 						}, account_currency)
 					)
@@ -469,6 +477,8 @@ class PurchaseInvoice(BuyingController):
 									"against": self.supplier,
 									"debit": flt(item.item_tax_amount, item.precision("item_tax_amount")),
 									"business_unit": item.business_unit,
+									"against_voucher": item.asset if item.asset else None,
+									"against_voucher_type": "Asset" if item.asset else None,
 									"remarks": self.remarks or "Accounting Entry for Stock"
 								})
 							)

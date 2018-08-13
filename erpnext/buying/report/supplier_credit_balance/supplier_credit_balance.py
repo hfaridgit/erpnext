@@ -5,114 +5,146 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 from frappe.utils import flt
+from erpnext.accounts.report.accounts_receivable.accounts_receivable import ReceivablePayableReport
 
 def execute(filters=None):
-	if not filters: filters = {}
-	#Check if supplier id is according to naming series or supplier name
-	supplier_naming_type = frappe.db.get_value("Buying Settings", None, "supp_master_name")
-	columns = get_columns(supplier_naming_type)
+	args = {
+		"party_type": "Supplier",
+		"naming_by": ["Buying Settings", "supp_master_name"],
+	}
 
-	data = []
+	return SupplierCreditBalance(filters).run(args)
 
-	supplier_list = get_details(filters)
+class SupplierCreditBalance(ReceivablePayableReport):
+	def run(self, args):
+		party_naming_by = frappe.db.get_value(args.get("naming_by")[0], None, args.get("naming_by")[1])
+		return self.get_columns(party_naming_by, args), self.get_data(party_naming_by, args)
 
-	for d in supplier_list:
-		row = []
+	def get_columns(self, party_naming_by, args):
+		columns = [_(args.get("party_type")) + ":Link/" + args.get("party_type") + ":200"]
 
-		outstanding_amt = get_supplier_outstanding(d.name, filters.get("company"), filters.get("business_unit"))
+		if party_naming_by == "Naming Series":
+			columns += [ args.get("party_type") + " Name::140"]
 
-		credit_limit = get_credit_limit(d.name, filters.get("company"))		
+		credit_debit_label = _("Credit Note Amt") if args.get('party_type') == 'Customer' else _("Debit Note Amt")
+		columns += [
+			_("Total Invoiced Amt") + ":Currency/currency:140",
+			_("Total Paid Amt") + ":Currency/currency:140",
+			credit_debit_label + ":Currency/currency:140",
+			_("Total Outstanding Amt") + ":Currency/currency:160",
+			_("Credit Limit") + ":Currency/currency:160",
+			_("Credit Balance") + ":Currency/currency:160",
+			"0-" + str(self.filters.range1) + ":Currency/currency:100",
+			str(self.filters.range1) + "-" + str(self.filters.range2) + ":Currency/currency:100",
+			str(self.filters.range2) + "-" + str(self.filters.range3) + ":Currency/currency:100",
+			str(self.filters.range3) + _("-Above") + ":Currency/currency:100"]
 
-		bal = flt(credit_limit) - flt(outstanding_amt)
+		if args.get("party_type") == "Customer":
+			columns += [
+				_("Territory") + ":Link/Territory:80", 
+				_("Customer Group") + ":Link/Customer Group:120"
+			]
+		if args.get("party_type") == "Supplier":
+			columns += [_("Supplier Type") + ":Link/Supplier Type:80"]
+			
+		columns.append({
+			"fieldname": "currency",
+			"label": _("Currency"),
+			"fieldtype": "Link",
+			"options": "Currency",
+			"width": 80
+		})
 
-		if supplier_naming_type == "Naming Series":
-			row = [d.name, d.supplier_name, credit_limit, outstanding_amt, bal]
-		else:
-			row = [d.name, credit_limit, outstanding_amt, bal]
+		return columns
 
-		if credit_limit:
+	def get_data(self, party_naming_by, args):
+		data = []
+
+		partywise_total = self.get_partywise_total(party_naming_by, args)
+
+		for party, party_dict in partywise_total.items():
+			row = [party]
+
+			if party_naming_by == "Naming Series":
+				row += [self.get_party_name(args.get("party_type"), party)]
+
+			credit_limit = self.get_party_credit_limit(party, args)
+			credit_balance = flt(party_dict.outstanding_amt) - flt(credit_limit)
+
+			row += [
+				party_dict.invoiced_amt, party_dict.paid_amt, party_dict.credit_amt, party_dict.outstanding_amt,
+				credit_limit, credit_balance, party_dict.range1, party_dict.range2, party_dict.range3, party_dict.range4,
+			]
+
+			if args.get("party_type") == "Customer":
+				row += [self.get_territory(party), self.get_customer_group(party)]
+			if args.get("party_type") == "Supplier":
+				row += [self.get_supplier_type(party)]
+				
+			row.append(party_dict.currency)
 			data.append(row)
 
-	return columns, data
+		return data
 
-def get_columns(supplier_naming_type):
-	columns = [
-		_("Supplier") + ":Link/Supplier:120",
-		_("Credit Limit") + ":Currency:120",
-		_("Outstanding Amt") + ":Currency:100",
-		_("Credit Balance") + ":Currency:120"
-	]
+	def get_partywise_total(self, party_naming_by, args):
+		party_total = frappe._dict()
+		for d in self.get_voucherwise_data(party_naming_by, args):
+			party_total.setdefault(d.party,
+				frappe._dict({
+					"invoiced_amt": 0,
+					"paid_amt": 0,
+					"credit_amt": 0,
+					"outstanding_amt": 0,
+					"credit_limit": 0,
+					"credit_balance": 0,
+					"range1": 0,
+					"range2": 0,
+					"range3": 0,
+					"range4": 0
+				})
+			)
+			for k in party_total[d.party].keys():
+				if k != "currency":
+					party_total[d.party][k] += flt(d.get(k, 0))
+				
+			party_total[d.party].currency = d.currency
 
-	if supplier_naming_type == "Naming Series":
-		columns.insert(1, _("Supplier Name") + ":Data:120")
+		return party_total
 
-	return columns
+	def get_voucherwise_data(self, party_naming_by, args):
+		voucherwise_data = ReceivablePayableReport(self.filters).run(args)[1]
 
-def get_details(filters):
-	conditions = ""
+		cols = ["posting_date", "party"]
 
-	if filters.get("supplier"):
-		conditions += " where name = %(supplier)s"
+		if party_naming_by == "Naming Series":
+			cols += ["party_name"]
 
-	return frappe.db.sql("""select name, supplier_name
-		from `tabSupplier` %s
-	""" % conditions, filters, as_dict=1)
+		cols += ["voucher_type", "voucher_no", "due_date"]
 
-def get_supplier_outstanding(supplier, company, business_unit, ignore_outstanding_purchase_order=False):
-	# Outstanding based on GL Entries
-	outstanding_based_on_gle = frappe.db.sql("""
-		select sum(debit) - sum(credit)
-		from `tabGL Entry`
-		where party_type = 'supplier' and party = %s and company=%s and business_unit=%s""", (supplier, company, business_unit))
+		if args.get("party_type") == "Supplier":
+			cols += ["bill_no", "bill_date"]
 
-	outstanding_based_on_gle = flt(outstanding_based_on_gle[0][0]) if outstanding_based_on_gle else 0
+		cols += ["invoiced_amt", "paid_amt", "credit_amt",
+		"outstanding_amt", "age", "range1", "range2", "range3", "range4", "currency"]
 
-	# Outstanding based on Purchase Order
-	outstanding_based_on_po = 0.0
+		if args.get("party_type") == "Supplier":
+			cols += ["supplier_type", "remarks"]
+		if args.get("party_type") == "Customer":
+			cols += ["territory", "customer_group", "remarks"]
 
-	# if credit limit check is bypassed at purchase order level,
-	# we should not consider outstanding Purchase Orders, when supplier credit balance report is run
-	if not ignore_outstanding_purchase_order:
-		outstanding_based_on_po = frappe.db.sql("""
-			select sum(base_grand_total*(100 - per_billed)/100)
-			from `tabPurchase Order`
-			where supplier=%s and docstatus = 1 and company=%s and business_unit=%s
-			and per_billed < 100 and status != 'Closed'""", (supplier, company, business_unit))
+		return self.make_data_dict(cols, voucherwise_data)
 
-		outstanding_based_on_po = flt(outstanding_based_on_po[0][0]) if outstanding_based_on_po else 0.0
+	def make_data_dict(self, cols, data):
+		data_dict = []
+		for d in data:
+			data_dict.append(frappe._dict(zip(cols, d)))
 
-	# Outstanding based on Purchase Receipt, which are not created against Purchase Order
-	unmarked_purchase_receipt_items = frappe.db.sql("""select
-			pr_item.name, pr_item.amount, pr.base_net_total, pr.base_grand_total
-		from `tabPurchase Receipt` pr, `tabPurchase Receipt Item` pr_item
-		where
-			pr.name = pr_item.parent
-			and pr.supplier=%s and pr.company=%s and pr.business_unit=%s
-			and pr.docstatus = 1 and pr.status not in ('Closed', 'Stopped')
-			and ifnull(pr_item.purchase_order, '') = ''
-		""", (supplier, company, business_unit), as_dict=True)
+		return data_dict
 
-	outstanding_based_on_pr = 0.0
+	def get_party_credit_limit(self, party, args):
+		if args.get("party_type") == "Supplier":
+			credit_limit_field = "supplier_credit_limit"
+		if args.get("party_type") == "Customer":
+			credit_limit_field = "credit_limit"
 
-	for pr_item in unmarked_purchase_receipt_items:
-		pi_amount = frappe.db.sql("""select sum(amount)
-			from `tabPurchase Invoice Item`
-			where pr_detail = %s and docstatus = 1""", pr_item.name)[0][0]
-
-		if flt(pr_item.amount) > flt(pi_amount) and pr_item.base_net_total:
-			outstanding_based_on_pr += ((flt(pr_item.amount) - flt(pi_amount)) \
-				/ pr_item.base_net_total) * pr_item.base_grand_total
-
-	return outstanding_based_on_gle + outstanding_based_on_po + outstanding_based_on_pr
-
-def get_credit_limit(supplier, company):
-	credit_limit = None
-
-	if supplier:
-		credit_limit, supplier_type = frappe.db.get_value("Supplier",
-			supplier, ["supplier_credit_limit", "supplier_type"])
-
-	if not credit_limit:
-		credit_limit = frappe.db.get_value("Company", company, "credit_limit")
-
-	return flt(credit_limit)
+		return frappe.db.get_value(args.get("party_type"), party, credit_limit_field)

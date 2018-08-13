@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2018-05-13 16:31:50.561704", 
+ "modified": "2018-06-21 14:52:25.373438", 
  "modified_by": "Administrator", 
  "module": "Stock", 
  "name": "Batch-Wise Balance", 
@@ -15,5 +15,9 @@
  "ref_doctype": "Stock Ledger Entry", 
  "report_name": "Batch-Wise Balance", 
  "report_type": "Script Report", 
- "roles": []
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ]
 }

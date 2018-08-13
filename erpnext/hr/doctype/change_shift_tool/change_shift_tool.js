@@ -4,11 +4,16 @@
 frappe.ui.form.on('Change Shift Tool', {
 	refresh: function(frm) {
 		frm.disable_save();
+		if (frm.hhh==1) {
+			frm.set_value("company", undefined);
+			frm.hhh = 0;
+		}
 	},
 	
 	onload: function(frm) {
 		frm.doc.department = frm.doc.branch = frm.doc.company = frm.doc.business_unit = "All";
 		frm.set_value("date", frappe.datetime.get_today());
+		frm.hhh = 1;
 		erpnext.change_shift_tool.load_employees(frm);
 	},
 
@@ -29,6 +34,9 @@ frappe.ui.form.on('Change Shift Tool', {
 	},
 
 	company: function(frm) {
+		erpnext.change_shift_tool.load_employees(frm);
+	}, 
+	business_unit: function(frm) {
 		erpnext.change_shift_tool.load_employees(frm);
 	}
 	

@@ -284,12 +284,22 @@ cur_frm.set_query("expense_account", "items", function(doc) {
 
 cur_frm.set_query("asset", "items", function(doc, cdt, cdn) {
 	var d = locals[cdt][cdn];
-	return {
-		filters: {
-			'item_code': d.item_code,
-			'docstatus': 1,
-			'company': doc.company,
-			'status': 'Submitted'
+	if(d.is_fixed_asset==1) {
+		return {
+			filters: {
+				'item_code': d.item_code,
+				'docstatus': 1,
+				'company': doc.company,
+				'status': 'Submitted'
+			}
+		}
+	} else {
+		return {
+			filters: {
+				'docstatus': 1,
+				'company': doc.company,
+				'status': 'Submitted'
+			}
 		}
 	}
 });

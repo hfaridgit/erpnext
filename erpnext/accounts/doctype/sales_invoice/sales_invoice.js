@@ -501,13 +501,23 @@ cur_frm.set_query("debit_to", function(doc) {
 
 cur_frm.set_query("asset", "items", function(doc, cdt, cdn) {
 	var d = locals[cdt][cdn];
-	return {
-		filters: [
-			["Asset", "item_code", "=", d.item_code],
-			["Asset", "docstatus", "=", 1],
-			["Asset", "status", "in", ["Submitted", "Partially Depreciated", "Fully Depreciated"]],
-			["Asset", "company", "=", doc.company]
-		]
+	if(d.is_fixed_asset==1) {
+		return {
+			filters: [
+				["Asset", "item_code", "=", d.item_code],
+				["Asset", "docstatus", "=", 1],
+				["Asset", "status", "in", ["Submitted", "Partially Depreciated", "Fully Depreciated"]],
+				["Asset", "company", "=", doc.company]
+			]
+		}
+	} else {
+		return {
+			filters: [
+				["Asset", "docstatus", "=", 1],
+				["Asset", "status", "in", ["Submitted", "Partially Depreciated", "Fully Depreciated"]],
+				["Asset", "company", "=", doc.company]
+			]
+		}
 	}
 });
 

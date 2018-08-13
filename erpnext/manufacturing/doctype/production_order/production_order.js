@@ -13,6 +13,8 @@ frappe.ui.form.on("Production Order", {
 			return {
 				filters: {
 					'company': frm.doc.company,
+					'business_unit': frm.doc.business_unit, 
+					'is_group': 0
 				}
 			}
 		});
@@ -21,6 +23,8 @@ frappe.ui.form.on("Production Order", {
 			return {
 				filters: {
 					'company': frm.doc.company,
+					'business_unit': frm.doc.business_unit, 
+					'is_group': 0
 				}
 			}
 		});
@@ -29,6 +33,8 @@ frappe.ui.form.on("Production Order", {
 			return {
 				filters: {
 					'company': frm.doc.company,
+					'business_unit': frm.doc.business_unit, 
+					'is_group': 0
 				}
 			}
 		});
@@ -37,6 +43,7 @@ frappe.ui.form.on("Production Order", {
 			return {
 				filters: {
 					'company': frm.doc.company,
+					'business_unit': frm.doc.business_unit, 
 					'is_group': 0
 				}
 			}
@@ -46,6 +53,7 @@ frappe.ui.form.on("Production Order", {
 			return {
 				filters: {
 					'company': frm.doc.company,
+					'business_unit': frm.doc.business_unit, 
 					'is_group': 0
 				}
 			}

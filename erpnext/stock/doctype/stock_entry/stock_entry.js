@@ -8,7 +8,7 @@ frappe.ui.form.on('Stock Entry', {
 			return {
 				filters: [
 					['Production Order', 'docstatus', '=', 1],
-					['Production Order', 'qty', '>','`tabProduction Order`.produced_qty'],
+					['Production Order', 'status', 'in',['Not Started', 'In Process', 'Submitted']],
 					['Production Order', 'company', '=', frm.doc.company]
 				]
 			}

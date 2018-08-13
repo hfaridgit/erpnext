@@ -208,8 +208,15 @@ doc_events = {
 		'validate': 'erpnext.regional.india.utils.set_place_of_supply'
 	},
 	# @custom
-	'Sales Invoice': {
-		'before_save': 'frappe.direction.customizations_2.sendmail_on_invalid_rate'
+	'Sales Order': {
+		'validate': [
+			'frappe.direction.customizations_2.check_credit_limit_in_sales_order',
+			'frappe.direction.customizations_2.check_overdue_sales_invoice'
+		],
+		'before_submit': 'frappe.direction.customizations_2.before_submit_sales_order'
+	},
+	'Stock Entry': {
+		'on_submit': 'frappe.direction.customizations_2.on_submit_stock_entry'
 	}
 }
 

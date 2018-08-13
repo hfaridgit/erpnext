@@ -412,6 +412,12 @@ def get_data():
 			"items": [
 				{
 					"type": "report",
+					"name": "Chart Of Accounts",
+					"doctype": "Account",
+					"is_query_report": True,
+				},
+				{
+					"type": "report",
 					"name": "Trial Balance for Party",
 					"doctype": "GL Entry",
 					"is_query_report": True,
@@ -463,6 +469,20 @@ def get_data():
 					"is_query_report": True,
 					"name": "Customer Credit Balance",
 					"doctype": "Customer"
+				},
+				{ 
+					"type": "report",
+					"is_query_report": True,
+					"name": "Operation Cost Distribution",
+					"label": _("Operation Cost Distribution"),  
+					"doctype": "Timesheet"
+				},
+				{ 
+					"type": "report",
+					"is_query_report": True,
+					"name": "Operation Cost Distribution By Cost Center",
+					"label": _("Operation Cost Distribution By Cost Center"),  
+					"doctype": "Timesheet"
 				},
 				{
 					"type": "report",

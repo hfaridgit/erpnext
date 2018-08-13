@@ -174,6 +174,13 @@ frappe.query_reports["Employee Transactions Review"] = {
 			} else { lt_t = t_in-1000 }
 		}
 
+		if (columnDef.df.fieldname=="permit_hours") {
+			if (dataContext.permit_hours!=0) {
+				value = dataContext.permit_hours.toString();
+			} else {
+				value = "";
+			}
+		}
 		if (columnDef.df.fieldname=="lateness_minutes2") {
 			var a = dataContext.lateness_minutes;
 			var hours = Math.trunc(a/60);
@@ -240,7 +247,7 @@ frappe.query_reports["Employee Transactions Review"] = {
 	"change_data": function(fldlbl, fldtyp, opts, field, values) {
 		if(values.docstatus>0) { frappe.msgprint(__("Transaction Already Submitted.")); return; }
 		if( field=="day_name" || field=="posting_date" || field=='bus_time_in' || field=='attendance_hours') { return; }
-		if( field=="lateness_minutes2" || field=="early_exit_minutes2" || field=='bus_time_in' || field=='overtime_minutes2') { return; }
+		if( field=="lateness_minutes2" || field=="early_exit_minutes2" || field=='bus_time_in' || field=='overtime_minutes2' || field=='permit_hours') { return; }
 		if (fldtyp=="Select") {
 			opts = opts.split(",");
 		}
@@ -366,7 +373,7 @@ frappe.query_reports["Employee Transactions Review"] = {
 		} else {
 			if(values.docstatus>0) { frappe.msgprint(__("Transaction Already Submitted.")); return; }
 			frappe.prompt([{fieldname: "total_units", fieldtype: "Int",  label: "Total Hours", "default": 1, reqd: 1},
-							{fieldname: ", is_early_leave", fieldtype: "Check",  label: "Early Leave", "default": 0}], 
+							{fieldname: "is_early_leave", fieldtype: "Check",  label: "Early Leave", "default": 0}], 
 				function(data) { 
 						frappe.call({
 							method: "erpnext.hr.doctype.employee_transactions_tool.employee_transactions_tool.change_permit",

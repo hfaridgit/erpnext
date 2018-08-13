@@ -26,12 +26,22 @@ def execute(filters=None):
 		credit_limit = get_credit_limit(d.name, filters.get("company"))		
 
 		bal = flt(credit_limit) - flt(outstanding_amt)
-
+		
+		credit_days_limit = frappe.get_value("Payment Term", d.payment_terms, "credit_days")
+		
+		cd = frappe.db.sql("""select datediff(now(), min(due_date)) as credit_days from `tabSales Invoice`
+								where outstanding_amount>0 and customer=%s""", (d.name), as_dict=1)
+								
+		if cd:
+			actual_credit_days = cd[0].credit_days
+		else:
+			actual_credit_days = 0
+			
 		if customer_naming_type == "Naming Series":
-			row = [d.name, d.customer_name, credit_limit, outstanding_amt, bal,
+			row = [d.name, d.customer_name, credit_limit, credit_days_limit, outstanding_amt, actual_credit_days, bal,
 				d.bypass_credit_limit_check_at_sales_order]
 		else:
-			row = [d.name, credit_limit, outstanding_amt, bal, d.bypass_credit_limit_check_at_sales_order]
+			row = [d.name, credit_limit, credit_days_limit, outstanding_amt, actual_credit_days, bal, d.bypass_credit_limit_check_at_sales_order]
 
 		if credit_limit:
 			data.append(row)
@@ -42,9 +52,11 @@ def get_columns(customer_naming_type):
 	columns = [
 		_("Customer") + ":Link/Customer:120",
 		_("Credit Limit") + ":Currency:120",
+		_("Days Limit") + ":Currency:120",
 		_("Outstanding Amt") + ":Currency:100",
+		_("Actual Days") + ":Currency:120",
 		_("Credit Balance") + ":Currency:120",
-		_("Bypass credit check at Sales Order ") + ":Check:240"
+		_("Bypass credit check at Sales Order ") + ":Check:120"
 	]
 
 	if customer_naming_type == "Naming Series":
@@ -58,6 +70,6 @@ def get_details(filters):
 	if filters.get("customer"):
 		conditions += " where name = %(customer)s"
 
-	return frappe.db.sql("""select name, customer_name,
+	return frappe.db.sql("""select name, customer_name, payment_terms, 
 		bypass_credit_limit_check_at_sales_order from `tabCustomer` %s
 	""" % conditions, filters, as_dict=1)

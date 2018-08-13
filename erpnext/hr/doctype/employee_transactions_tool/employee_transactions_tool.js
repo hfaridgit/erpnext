@@ -89,5 +89,11 @@ frappe.ui.form.on('Employee Transactions Tool', {
 		if(frm.doc.transaction_month>12 || frm.doc.transaction_month<1) {
 			frappe.throw(__("Wrong Month Entered."));
 		}
+		if(frm.doc.employee==undefined) {
+			frm.doc.employee_name = undefined;
+		}
 	}
 });
+cur_frm.fields_dict.employee.set_query = function(doc,cdt,cdn) {
+	return{	query: "erpnext.controllers.queries.employee_query2" }
+}

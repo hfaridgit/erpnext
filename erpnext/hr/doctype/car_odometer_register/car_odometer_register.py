@@ -9,6 +9,13 @@ from frappe.model.document import Document
 
 class CarOdometerRegister(Document):
 	def validate(self):
+		if self.start_reading and self.end_reading:
+			tot = self.end_reading - self.start_reading
+			if self.total_counter != tot:
+				self.total_counter = self.end_reading - self.start_reading
+		else:
+			if not self.total_counter:
+				frappe.throw(_("There are no readings registered."))
 		check_exist = frappe.db.sql("""select name from `tabCar Odometer Register`
 						where employee=%(employee)s and ((end_date>=%(start_date)s and end_date<=%(end_date)s) or 
 						(start_date>=%(start_date)s and start_date<=%(end_date)s)) and docstatus=1""", 

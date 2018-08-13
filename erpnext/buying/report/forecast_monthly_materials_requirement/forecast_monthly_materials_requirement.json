@@ -1,0 +1,31 @@
+{
+ "add_total_row": 0, 
+ "apply_user_permissions": 1, 
+ "creation": "2018-08-01 16:56:36.190056", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "letter_head": "MIFAD", 
+ "modified": "2018-08-01 17:08:27.463317", 
+ "modified_by": "Administrator", 
+ "module": "Buying", 
+ "name": "Forecast Monthly Materials Requirement", 
+ "owner": "Administrator", 
+ "query": "select be.item_code as Item, be.item_name as 'Name::300', be.stock_uom as 'UOM::70', \nsum(sfi.qty_q11*be.stock_qty/b.quantity) as January, \nsum(sfi.qty_q12*be.stock_qty/b.quantity) as February, \nsum(sfi.qty_q13*be.stock_qty/b.quantity) as March, \nsum(sfi.qty_q24*be.stock_qty/b.quantity) as April, \nsum(sfi.qty_q25*be.stock_qty/b.quantity) as May, \nsum(sfi.qty_q26*be.stock_qty/b.quantity) as June, \nsum(sfi.qty_q37*be.stock_qty/b.quantity) as July, \nsum(sfi.qty_q38*be.stock_qty/b.quantity) as August, \nsum(sfi.qty_q39*be.stock_qty/b.quantity) as September, \nsum(sfi.qty_q410*be.stock_qty/b.quantity) as October, \nsum(sfi.qty_q411*be.stock_qty/b.quantity) as November, \nsum(sfi.qty_q412*be.stock_qty/b.quantity) as December \nfrom `tabSales Forecast Item` sfi\nleft join `tabSales Forecast` sf on sfi.parent=sf.name\nleft join `tabBOM` b on sfi.item=b.item\nleft join `tabBOM Explosion Item` be on be.parent=b.name\nwhere b.is_active=1 and b.is_default=1 and b.docstatus=1\nand sf.year=%(year)s and sf.company=%(company)s and sf.business_unit=%(business_unit)s\ngroup by Item", 
+ "ref_doctype": "Sales Forecast", 
+ "report_name": "Forecast Monthly Materials Requirement", 
+ "report_type": "Query Report", 
+ "roles": [
+  {
+   "role": "System Manager"
+  }, 
+  {
+   "role": "Purchase Manager"
+  }, 
+  {
+   "role": "Purchase User"
+  }
+ ]
+}

@@ -289,7 +289,8 @@ class SalarySlip(TransactionBase):
 			where
 				parent in %(holiday_lists)s
 				and holiday_date >= %(start_date)s
-				and holiday_date <= %(end_date)s''', {
+				and holiday_date <= %(end_date)s
+				group by holiday_date''', {
 					"holiday_lists": holiday_lists,
 					"start_date": start_date,
 					"end_date": end_date

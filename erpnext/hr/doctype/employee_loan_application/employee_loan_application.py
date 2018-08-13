@@ -16,13 +16,8 @@ class EmployeeLoanApplication(Document):
 		from erpnext.setup.doctype.business_unit.business_unit import validate_bu
 		validate_bu(self)
 		check_repayment_method(self.repayment_method, self.loan_amount, self.repayment_amount, self.repayment_periods)
-		self.validate_loan_amount()
+		validate_loan_amount(self)
 		self.get_repayment_details()
-
-	def validate_loan_amount(self):
-		maximum_loan_limit = frappe.db.get_value('Loan Type', self.loan_type, 'maximum_loan_amount')
-		if maximum_loan_limit and self.loan_amount > maximum_loan_limit:
-			frappe.throw(_("Loan Amount cannot exceed Maximum Loan Amount of {0}").format(maximum_loan_limit))
 
 	def get_repayment_details(self):
 		if self.repayment_method == "Repay Over Number of Periods":
@@ -51,6 +46,17 @@ class EmployeeLoanApplication(Document):
 			self.total_payable_interest += interest_amount
 			
 		self.total_payable_amount = self.loan_amount + self.total_payable_interest
+
+def validate_loan_amount(doc):
+	maximum_loan_limit = frappe.db.get_value('Loan Type', doc.loan_type, 'maximum_loan_amount')
+	previous_loan_amounts = frappe.db.sql("""SELECT sum(loan_amount) as loan_amount from `tabEmployee Loan` 
+							where docstatus=1 and loan_type=%s and employee=%s and status in ("Sanctioned","Repaid/Closed")""", 
+							(doc.loan_type, doc.employee))
+	#frappe.throw(_("Previous Loan Amounts are {0}").format(previous_loan_amounts[0][0]))
+	if maximum_loan_limit:
+		maximum_loan_limit = flt(maximum_loan_limit) - flt(previous_loan_amounts[0][0])
+	if maximum_loan_limit and doc.loan_amount > maximum_loan_limit:
+		frappe.throw(_("Loan Amount cannot exceed Maximum Loan Amount of {0}").format(maximum_loan_limit))
 		
 @frappe.whitelist()
 def make_employee_loan(source_name, target_doc = None):

@@ -10,7 +10,7 @@ from frappe.utils import cint, cstr, date_diff, add_days, flt, formatdate, getda
 from frappe.desk.reportview import get_match_cond, get_filters_cond
 from erpnext.hr.utils import set_employee_name
 from erpnext.hr.doctype.employee.employee import get_holiday_list_for_employee
-from erpnext.hr.doctype.employee_leave_approver.employee_leave_approver import get_approver_list
+from erpnext.hr.doctype.employee_leave_approver.employee_leave_approver import get_approver_listx
 
 
 class InvalidLeaveApproverError(frappe.ValidationError): pass
@@ -213,7 +213,7 @@ def get_approvers(doctype, txt, searchfield, start, page_len, filters):
 		and approver.leave_approver=user.name""", (filters.get("employee"), "%" + txt + "%"))
 
 	if not approvers_list:
-		approvers_list = get_approver_list(employee_user)
+		approvers_list = get_approver_listx(employee_user)
 	return approvers_list
 
 @frappe.whitelist()

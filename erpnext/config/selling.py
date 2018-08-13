@@ -32,6 +32,46 @@ def get_data():
 					"type": "doctype",
 					"name": "Sales Person Route"
 				},
+				# @custom
+				{
+					"type": "doctype",
+					"name": "Brief"
+				},
+				# @custom
+				{
+					"type": "doctype",
+					"name": "Sample Request"
+				},
+				# @custom
+				{
+					"type": "doctype",
+					"name": "Mission Planning"
+				},
+				# @custom
+				{
+					"type": "doctype",
+					"name": "Mission Actual"
+				},
+				# @custom
+				{
+					"type": "doctype",
+					"name": "Commercial Returned"
+				},
+				# @custom
+				{
+					"type": "doctype",
+					"name": "Complains Form"
+				},
+				# @custom
+				{
+					"type": "doctype",
+					"name": "Technical Returned"
+				},
+				# @custom
+				{
+					"type": "doctype",
+					"name": "Visits"
+				},
 			]
 		},
 		{
@@ -311,6 +351,66 @@ def get_data():
 					"is_query_report": True,
 					"name": "Customer Credit Balance",
 					"doctype": "Customer"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Accounts Receivable Summary with Sales Person",
+					"doctype": "Sales Invoice"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Accounts Receivable with Sales Person",
+					"doctype": "Sales Invoice"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Sales Forecast",
+					"doctype": "Sales Forecast"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Detailed Sales Forecast",
+					"doctype": "Sales Forecast"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Item-wise Sales Register with Sales Person",
+					"doctype": "Sales Invoice"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Sales Person Sales Summary",
+					"doctype": "Sales Invoice"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Sales Forecast By Customer",
+					"doctype": "Sales Forecast"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Sales Forecast By Item",
+					"doctype": "Sales Forecast"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Price List",
+					"doctype": "Item Price"
 				},
 			]
 		},

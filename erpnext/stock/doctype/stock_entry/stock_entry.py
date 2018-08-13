@@ -332,7 +332,7 @@ class StockEntry(StockController):
 				if getattr(self, "pro_doc", frappe._dict()).scrap_warehouse == d.t_warehouse:
 
 					scrap_material_cost += flt(d.basic_amount)
-
+					
 		number_of_fg_items = len([t.t_warehouse for t in self.get("items") if t.t_warehouse])
 		if (fg_basic_rate == 0.0 and number_of_fg_items == 1) or update_finished_item_rate:
 			self.set_basic_rate_for_finished_goods(raw_material_cost, scrap_material_cost)

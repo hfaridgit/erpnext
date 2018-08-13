@@ -1,0 +1,30 @@
+{
+ "add_total_row": 1, 
+ "apply_user_permissions": 1, 
+ "creation": "2018-07-23 13:58:12.820501", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "modified": "2018-07-23 17:09:52.613221", 
+ "modified_by": "Administrator", 
+ "module": "Manufacturing", 
+ "name": "Operation Cost Distribution", 
+ "owner": "Administrator", 
+ "query": "select max(date(tsd.to_time)) as 'Date::100', ts.production_order as 'Order::120', \nsum(ts.total_hours*tsd.hour_rate_electricity) as 'Electricity:Currency:100', sum(ts.total_hours*tsd.hour_rate_gas) as 'Gas:Currency:100', \nsum(ts.total_hours*tsd.hour_rate_water) as 'Water:Currency:100', sum(ts.total_hours*tsd.hour_rate_labour) as 'Labour:Currency:100', \nsum(ts.total_hours*tsd.hour_rate_rent) as 'Rent:Currency:100', sum(ts.total_hours*tsd.hour_rate_consumable) as 'Consumable:Currency:100'\nfrom `tabTimesheet Detail` tsd \nleft join `tabTimesheet` ts on ts.name=tsd.parent\nwhere not isnull(ts.production_order) and ts.docstatus=1 and ts.company=%(company)s and ts.business_unit=%(business_unit)s and tsd.to_time>=%(from_date)s and tsd.to_time<=%(to_date)s\ngroup by production_order\norder by tsd.to_time\n", 
+ "ref_doctype": "Timesheet", 
+ "report_name": "Operation Cost Distribution", 
+ "report_type": "Query Report", 
+ "roles": [
+  {
+   "role": "Accountant User"
+  }, 
+  {
+   "role": "Accounts User"
+  }, 
+  {
+   "role": "Accounts Manager"
+  }
+ ]
+}

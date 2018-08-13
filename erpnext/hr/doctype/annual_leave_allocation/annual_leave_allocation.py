@@ -7,7 +7,7 @@ import frappe
 from frappe.model.naming import make_autoname
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, getdate, cint, add_months, date_diff
+from frappe.utils import flt, getdate, cint, add_days, add_months, date_diff
 import calendar, datetime
 
 class AnnualLeaveAllocation(Document):
@@ -117,23 +117,28 @@ class AnnualLeaveAllocation(Document):
 			for lv in leave_types:
 				if not e.date_of_joining:
 					frappe.throw(_("Date of Joining not defined for Employee {0}").format(e.employee_name))
+				s_date = self.from_date
 				end_date = add_months(e.date_of_joining, lv.occurrence_period)
 				if not e.name in excuted:
-					try:
-						la = frappe.new_doc('Leave Allocation')
-						la.employee = e.name
-						la.employee_name = e.employee_name
-						la.leave_type = lv.name
-						la.from_date = self.from_date
-						la.to_date = end_date
-						#la.carry_forward = cint(lv.is_carry_forward)
-						la.new_leaves_allocated = flt(lv.default_balance)
-						la.annual_leave_allocation = self.name
-						la.insert()
-						la.submit()
-						frappe.db.commit()
-					except:
-						pass
+					while getdate(s_date) < getdate(self.to_date):
+						try:
+							la = frappe.new_doc('Leave Allocation')
+							la.employee = e.name
+							la.employee_name = e.employee_name
+							la.leave_type = lv.name
+							la.from_date = s_date
+							la.to_date = end_date
+							#la.carry_forward = cint(lv.is_carry_forward)
+							la.new_leaves_allocated = flt(lv.default_balance)
+							la.annual_leave_allocation = self.name
+							la.insert()
+							la.submit()
+							frappe.db.commit()
+						except:
+							pass
+						s_date = add_days(end_date, 1)
+						end_date = add_days(add_months(s_date, lv.occurrence_period), -1)
+						
 		
 		frappe.msgprint(_("Leaves Allocated Successfully."))
 

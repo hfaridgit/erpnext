@@ -21,19 +21,36 @@ class ProductionForecastTool(Document):
 
 	def get_items(self):
 		item_condition = ""
+		if self.company:
+			item_condition += " and sf.company = '{0}'".format(frappe.db.escape(self.company))
 		if self.business_unit:
-			item_condition = ' and sf.business_unit = "{0}"'.format(frappe.db.escape(self.business_unit))
-		if self.from_month:
-			item_condition = " and month(str_to_date(sfm.month,'%M'))>=month(str_to_date('{0}','%M'))".format(frappe.db.escape(self.from_month))
-		if self.to_month:
-			item_condition = " and month(str_to_date(sfm.month,'%M'))>=month(str_to_date('{0}','%M'))".format(frappe.db.escape(self.to_month))
+			item_condition += " and sf.business_unit = '{0}'".format(frappe.db.escape(self.business_unit))
+			
+		qty = """sum(if(month(str_to_date(left('{0}',3),'%b'))=1,sfi.qty_q11,0)+
+			if(month(str_to_date(left('{0}',3),'%b'))<=2 and month(str_to_date(left('{1}',3),'%b'))>=2,sfi.qty_q12,0)+ 
+			if(month(str_to_date(left('{0}',3),'%b'))<=3 and month(str_to_date(left('{1}',3),'%b'))>=3,sfi.qty_q13,0)+ 
+			if(month(str_to_date(left('{0}',3),'%b'))<=4 and month(str_to_date(left('{1}',3),'%b'))>=4,sfi.qty_q24,0)+ 
+			if(month(str_to_date(left('{0}',3),'%b'))<=5 and month(str_to_date(left('{1}',3),'%b'))>=5,sfi.qty_q25,0)+ 
+			if(month(str_to_date(left('{0}',3),'%b'))<=6 and month(str_to_date(left('{1}',3),'%b'))>=6,sfi.qty_q26,0)+ 
+			if(month(str_to_date(left('{0}',3),'%b'))<=7 and month(str_to_date(left('{1}',3),'%b'))>=7,sfi.qty_q37,0)+ 
+			if(month(str_to_date(left('{0}',3),'%b'))<=8 and month(str_to_date(left('{1}',3),'%b'))>=8,sfi.qty_q38,0)+ 
+			if(month(str_to_date(left('{0}',3),'%b'))<=9 and month(str_to_date(left('{1}',3),'%b'))>=9,sfi.qty_q39,0)+ 
+			if(month(str_to_date(left('{0}',3),'%b'))<=10 and month(str_to_date(left('{1}',3),'%b'))>=10,sfi.qty_q410,0)+ 
+			if(month(str_to_date(left('{0}',3),'%b'))<=11 and month(str_to_date(left('{1}',3),'%b'))>=11,sfi.qty_q411,0)+ 
+			if(month(str_to_date(left('{0}',3),'%b'))<=12 and month(str_to_date(left('{1}',3),'%b'))>=12,sfi.qty_q412,0))""".format(frappe.db.escape(self.from_month),frappe.db.escape(self.to_month))
+		#if self.from_month:
+		#	item_condition += " and month(str_to_date(sfm.month,'%M'))>=month(str_to_date('{0}','%M'))".format(frappe.db.escape(self.from_month))
+		#if self.to_month:
+		#	item_condition += " and month(str_to_date(sfm.month,'%M'))<=month(str_to_date('{0}','%M'))".format(frappe.db.escape(self.to_month))
 
-		items = frappe.db.sql("""select sf.item_code, sf.uom, sum(sfm.qty) as pending_qty, sf.year as forecast_year, i.default_warehouse 
-			from `tabSales Forecast Month` sfm
-			left join `tabSales Forecast` sf on sf.name=sfm.parent
-			left join `tabItem` i on i.name=sf.item_code
-			where sf.year=%s and sf.company=%s %s group by item_code""", (self.get_items_for_year, self.company, item_condition), as_dict=1)
+		items = frappe.db.sql("""select  sfi.item as item_code, i.stock_uom as uom, %s as pending_qty, sf.year as forecast_year, i.default_warehouse 
+								From `tabSales Forecast Item` sfi
+								left join `tabSales Forecast` sf on sf.name=sfi.parent
+								left join `tabItem` i on i.name=sfi.item
+								where sf.year=%s %s group by item_code""" % (qty, self.get_items_for_year, item_condition), as_dict=1)
 
+		if not items:
+			frappe.throw(_("No Items Found"))
 		self.add_items(items)
 
 	def add_items(self, items):
@@ -107,7 +124,7 @@ class ProductionForecastTool(Document):
 			item_details.update({
 				"qty": d.planned_qty
 			})
-			item_dict[(d.item_code, d.material_request_item, d.warehouse)] = item_details
+			item_dict[(d.item_code, d.warehouse)] = item_details
 
 		return item_dict
 
@@ -307,9 +324,7 @@ class ProductionForecastTool(Document):
 			# distribute requested qty SO wise
 			for item_details in so_item_qty:
 				if requested_qty:
-					sales_order = item_details[4] or "No Sales Order"
-					if self.get_items_from == "Material Request":
-						sales_order = "No Sales Order"
+					sales_order = "No Sales Order"
 					if requested_qty <= item_details[0]:
 						adjusted_qty = requested_qty
 					else:
@@ -354,40 +369,38 @@ class ProductionForecastTool(Document):
 
 		material_request_list = []
 		if items_to_be_requested:
+			material_request = frappe.new_doc("Material Request")
+			material_request.update({
+				"transaction_date": nowdate(),
+				"status": "Draft",
+				"company": self.company,
+				"business_unit": self.business_unit,
+				"requested_by": frappe.session.user,
+				"schedule_date": nowdate(),
+			})
+			material_request.update({"material_request_type": "Purchase"})
+
 			for item in items_to_be_requested:
 				item_wrapper = frappe.get_doc("Item", item)
-				material_request = frappe.new_doc("Material Request")
-				material_request.update({
-					"transaction_date": nowdate(),
-					"status": "Draft",
-					"company": self.company,
-					"business_unit": self.business_unit,
-					"requested_by": frappe.session.user,
-					"schedule_date": add_days(nowdate(), cint(item_wrapper.lead_time_days)),
-				})
-				material_request.update({"material_request_type": item_wrapper.default_material_request_type})
-
 				for sales_order, requested_qty in items_to_be_requested[item].items():
 					material_request.append("items", {
 						"doctype": "Material Request Item",
 						"__islocal": 1,
 						"item_code": item,
 						"item_name": item_wrapper.item_name,
+						"business_unit": self.business_unit,
 						"description": item_wrapper.description,
 						"uom": item_wrapper.stock_uom,
 						"item_group": item_wrapper.item_group,
 						"brand": item_wrapper.brand,
 						"qty": requested_qty,
 						"schedule_date": add_days(nowdate(), cint(item_wrapper.lead_time_days)),
-						"warehouse": self.purchase_request_for_warehouse,
-						"sales_order": sales_order if sales_order!="No Sales Order" else None,
-						"project": frappe.db.get_value("Sales Order", sales_order, "project") \
-							if sales_order!="No Sales Order" else None
+						"warehouse": self.purchase_request_for_warehouse
 					})
 
-				material_request.flags.ignore_permissions = 1
-				material_request.submit()
-				material_request_list.append(material_request.name)
+			material_request.flags.ignore_permissions = 1
+			material_request.insert()
+			material_request_list.append(material_request.name)
 
 			if material_request_list:
 				message = ["""<a href="#Form/Material Request/%s" target="_blank">%s</a>""" % \

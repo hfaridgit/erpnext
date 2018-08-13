@@ -86,7 +86,8 @@ def get_emp_data(job_name=None):
 
 @frappe.whitelist()
 def get_org_chart(company=None):
-	org_data = frappe.db.sql("""select j.lvl, j.designation, j.name as job_name 
+	org_data = frappe.db.sql("""select a.*, ifnull(b.employees,0) as employees from (
+									select j.lvl, j.designation, j.name as job_name 
 									from (SELECT (COUNT(parent.name) - 1) as lvl, node.name AS name,node.company, node.enabled, node.lft, node.designation  
 									FROM `tabJob` AS node,
 											`tabJob` AS parent
@@ -94,7 +95,12 @@ def get_org_chart(company=None):
 									GROUP BY node.name
 									ORDER BY node.lft) j  
 									where j.enabled=1 and j.company=%s
-									order by j.lft""" , (company), as_dict=True)
+									order by j.lft) a
+									left join (select job_name, count(*) as employees from `tabEmployee` 
+									where status='Active' 
+									group by job_name) b
+									on a.job_name=b.job_name
+									""" , (company), as_dict=True)
 	return org_data
 
 @frappe.whitelist()

@@ -12,7 +12,7 @@ from frappe.desk.reportview import get_match_cond, get_filters_cond
 from erpnext.hr.utils import set_employee_name
 from erpnext.hr.doctype.leave_block_list.leave_block_list import get_applicable_block_dates
 from erpnext.hr.doctype.employee.employee import get_holiday_list_for_employee
-from erpnext.hr.doctype.employee_leave_approver.employee_leave_approver import get_approver_list
+from erpnext.hr.doctype.employee_leave_approver.employee_leave_approver import get_approver_listx
 
 
 class LeaveDayBlockedError(frappe.ValidationError): pass
@@ -44,8 +44,11 @@ class LeaveApplication(Document):
 		self.validate_block_days()
 		self.validate_salary_processed_days()
 		self.validate_leave_approver()
-		self.validate_attendance()
+		# self.validate_attendance()
 		self.validate_leave_type()
+		if self.from_time == self.to_time:
+			self.from_time = None
+			self.to_time = None
 		
 	def on_update(self):
 		if (not self.previous_doc and self.leave_approver) or (self.previous_doc and \
@@ -241,7 +244,7 @@ class LeaveApplication(Document):
 		attendance = frappe.db.sql("""select name from `tabAttendance` where employee = %s and (attendance_date between %s and %s)
 					and status = "Present" and docstatus = 1""",
 			(self.employee, self.from_date, self.to_date))
-		if attendance:
+		if attendance and self.leave_type_type != 'Mission' and self.half_day == 0:
 			frappe.throw(_("Attendance for employee {0} is already marked for this day").format(self.employee),
 				AttendanceAlreadyMarkedError)
 
@@ -388,30 +391,57 @@ def	check_saturdays(start_date, end_date):
 
 @frappe.whitelist()
 def get_leave_types(doctype, txt, searchfield, start, page_len, filters):		
-	leaves_list = frappe.db.sql("""select la.leave_type as name 
-						from `tabLeave Allocation` la
-						left join `tabLeave Type` lt on la.leave_type=lt.name
-						where %(from_date)s between la.from_date and la.to_date 
-						and la.employee=%(employee)s
-						and la.docstatus=1 and la.total_leaves_allocated>0
-						and lt.is_self_service=1 and (la.leave_type like %(txt)s)
-						group by la.leave_type
-						having 1=1 
-						{mcond}
-						order by 
-							if(locate(%(_txt)s, la.leave_type), locate(%(_txt)s, la.leave_type), 99999),
-							la.leave_type
-						limit %(start)s, %(page_len)s""".format(**{
-							'key': searchfield,
-							'mcond':get_match_cond(doctype)
-						}), {
-							'txt': "%%%s%%" % txt,
-							'_txt': txt.replace("%", ""),
-							'start': start,
-							'page_len': page_len,
-							'employee': filters.get("employee"), 
-							'from_date': filters.get("from_date")
-						})
+	if filters.get("user_role") and filters.get("user_role") == "user":
+		leaves_list = frappe.db.sql("""select name from ( 
+							select leave_type as name from `tabLeave Allocation`
+							where %(from_date)s between from_date and to_date 
+							and employee=%(employee)s and docstatus=1 and total_leaves_allocated>0
+							Union all
+							select name from `tabLeave Type` where is_self_service=1) a
+							where (name like %(txt)s)
+							group by name
+							having 1=1 
+							{mcond}
+							order by 
+								if(locate(%(_txt)s, name), locate(%(_txt)s, name), 99999),
+								name
+							limit %(start)s, %(page_len)s""".format(**{
+								'key': searchfield,
+								'mcond':get_match_cond(doctype)
+							}), {
+								'txt': "%%%s%%" % txt,
+								'_txt': txt.replace("%", ""),
+								'start': start,
+								'page_len': page_len,
+								'employee': filters.get("employee"), 
+								'from_date': filters.get("from_date")
+							})
+
+	if (not filters.get("user_role")) or filters.get("user_role") == "admin":
+		leaves_list = frappe.db.sql("""select name from (
+							select leave_type as name from `tabLeave Allocation` 
+							where %(from_date)s between from_date and to_date 
+							and employee=%(employee)s and docstatus=1 and total_leaves_allocated>0
+							Union all
+							select name from `tabLeave Type` where leave_type='Occasional Leave' or leave_type='Mission') a 
+							where name like %(txt)s
+							group by name
+							having 1=1 
+							{mcond}
+							order by 
+								if(locate(%(_txt)s, name), locate(%(_txt)s, name), 99999),
+								name
+							limit %(start)s, %(page_len)s""".format(**{
+								'key': searchfield,
+								'mcond':get_match_cond(doctype)
+							}), {
+								'txt': "%%%s%%" % txt,
+								'_txt': txt.replace("%", ""),
+								'start': start,
+								'page_len': page_len,
+								'employee': filters.get("employee"), 
+								'from_date': filters.get("from_date")
+							})
 
 	return leaves_list
 	
@@ -429,7 +459,7 @@ def get_approvers(doctype, txt, searchfield, start, page_len, filters):
 		and approver.leave_approver=user.name""", (filters.get("employee"), "%" + txt + "%"))
 
 	if not approvers_list:
-		approvers_list = get_approver_list(employee_user)
+		approvers_list = get_approver_listx(employee_user)
 	return approvers_list
 
 @frappe.whitelist()

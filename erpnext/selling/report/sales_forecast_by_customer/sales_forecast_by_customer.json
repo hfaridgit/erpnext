@@ -1,0 +1,27 @@
+{
+ "add_total_row": 0, 
+ "apply_user_permissions": 1, 
+ "creation": "2018-07-22 14:51:07.103191", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "modified": "2018-07-22 15:41:15.264755", 
+ "modified_by": "Administrator", 
+ "module": "Selling", 
+ "name": "Sales Forecast By Customer", 
+ "owner": "Administrator", 
+ "query": "SELECT  sfi.`item` as 'Item Code::150', sfi.`item_name` as 'Item Name::200',  \nsfi.`qty_q11` as 'JAN | Qty::100',  \nsfi.`final_price_q11` as 'JAN | Final Price::120',  \nsfi.`last_price_last_rate_q11` as 'JAN | PL Price::120',  \nsfi.`last_sales_rate_q11` as 'JAN | LS Price::120',  \nsfi.`last_year_actual_qty_q11` as 'JAN | LY Actual::120',  \nsfi.`last_year_forecast_qty_q11` as 'JAN | LY Forecast::120',  \nsfi.`qty_q12` as 'FEB | Qty::100',  \nsfi.`final_price_q12` as 'FEB | Final Price::120',  \nsfi.`last_price_last_rate_q12` as 'FEB | PL Price::120',  \nsfi.`last_sales_rate_q12` as 'FEB | LS Price::120',  \nsfi.`last_year_actual_qty_q12` as 'FEB | LY Actual::120',  \nsfi.`last_year_forecast_qty_q12` as 'FEB | LY Forecast::120',  \nsfi.`qty_q13` as 'MAR | Qty::100',  \nsfi.`final_price_q13` as 'MAR | Final Price::120',  \nsfi.`last_price_last_rate_q13` as 'MAR | PL Price::120',  \nsfi.`last_sales_rate_q13` as 'MAR | LS Price::120',  \nsfi.`last_year_actual_qty_q13` as 'MAR | LY Actual::120',  \nsfi.`last_year_forecast_qty_q13` as 'MAR | LY Forecast::120',  \nsfi.`qty_q24` as 'APR | Qty::100',  \nsfi.`final_price_q24` as 'APR | Final Price::120',  \nsfi.`last_price_last_rate_q24` as 'APR | PL Price::120',  \nsfi.`last_sales_rate_q24` as 'APR | LS Price::120',  \nsfi.`last_year_actual_qty_q24` as 'APR | LY Actual::120',  \nsfi.`last_year_forecast_qty_q24` as 'APR | LY Forecast::120',  \nsfi.`qty_q25` as 'MAY | Qty::100',  \nsfi.`final_price_q25` as 'MAY | Final Price::120',  \nsfi.`last_price_last_rate_q25` as 'MAY | PL Price::120',  \nsfi.`last_sales_rate_q25` as 'MAY | LS Price::120',  \nsfi.`last_year_actual_qty_q25` as 'MAY | LY Actual::120',  \nsfi.`last_year_forecast_qty_q25` as 'MAY | LY Forecast::120',  \nsfi.`qty_q26` as 'JUN | Qty::100',  \nsfi.`final_price_q26` as 'JUN | Final Price::120',  \nsfi.`last_price_last_rate_q26` as 'JUN | PL Price::120',  \nsfi.`last_sales_rate_q26` as 'JUN | LS Price::120',  \nsfi.`last_year_actual_qty_q26` as 'JUN | LY Actual::120',  \nsfi.`last_year_forecast_qty_q26` as 'JUN | LY Forecast::120',  \nsfi.`qty_q37` as 'JUL | Qty::100',  \nsfi.`final_price_q37` as 'JUL | Final Price::120',  \nsfi.`last_price_last_rate_q37` as 'JUL | PL Price::120',  \nsfi.`last_sales_rate_q37` as 'JUL | LS Price::120',  \nsfi.`last_year_actual_qty_q37` as 'JUL | LY Actual::120',  \nsfi.`last_year_forecast_qty_q37` as 'JUL | LY Forecast::120',  \nsfi.`qty_q38` as 'AUG | Qty::100',  \nsfi.`final_price_q38` as 'AUG | Final Price::120',  \nsfi.`last_price_last_rate_q38` as 'AUG | PL Price::120',  \nsfi.`last_sales_rate_q38` as 'AUG | LS Price::120',  \nsfi.`last_year_actual_qty_q38` as 'AUG | LY Actual::120',  \nsfi.`last_year_forecast_qty_q38` as 'AUG | LY Forecast::120',  \nsfi.`qty_q39` as 'SEP | Qty::100',  \nsfi.`final_price_q39` as 'SEP | Final Price::120',  \nsfi.`last_price_last_rate_q39` as 'SEP | PL Price::120',  \nsfi.`last_sales_rate_q39` as 'SEP | LS Price::120',  \nsfi.`last_year_actual_qty_q39` as 'SEP | LY Actual::120',  \nsfi.`last_year_forecast_qty_q39` as 'SEP | LY Forecast::120',  \nsfi.`qty_q410` as 'OCT | Qty::100',  \nsfi.`final_price_q410` as 'OCT | Final Price::120',  \nsfi.`last_price_last_rate_q410` as 'OCT | PL Price::120',  \nsfi.`last_sales_rate_q410` as 'OCT | LS Price::120',  \nsfi.`last_year_actual_qty_q410` as 'OCT | LY Actual::120',  \nsfi.`last_year_forecast_qty_q410` as 'OCT | LY Forecast::120',  \nsfi.`qty_q411` as 'NOV | Qty::100',  \nsfi.`final_price_q411` as 'NOV | Final Price::120',  \nsfi.`last_price_last_rate_q411` as 'NOV | PL Price::120',  \nsfi.`last_sales_rate_q411` as 'NOV | LS Price::120',  \nsfi.`last_year_actual_qty_q411` as 'NOV | LY Actual::120',  \nsfi.`last_year_forecast_qty_q411` as 'NOV | LY Forecast::120',  \nsfi.`qty_q412` as 'DEC | Qty::100',  \nsfi.`final_price_q412` as 'DEC | Final Price::120',  \nsfi.`last_price_last_rate_q412` as 'DEC | PL Price::120',  \nsfi.`last_sales_rate_q412` as 'DEC | LS Price::120',  \nsfi.`last_year_actual_qty_q412` as 'DEC | LY Actual::120',  \nsfi.`last_year_forecast_qty_q412` as 'DEC | LY Forecast::120'\nFrom `tabSales Forecast Item` sfi\nleft join `tabSales Forecast` sf on sf.name=sfi.parent\nwhere sf.docstatus<>2 and sf.company=%(company)s and sf.business_unit=%(business_unit)s and sf.year=%(year)s and sf.sales_person=%(sales_person)s \nand sf.customer=%(customer)s \n\n", 
+ "ref_doctype": "Sales Forecast", 
+ "report_name": "Sales Forecast By Customer", 
+ "report_type": "Query Report", 
+ "roles": [
+  {
+   "role": "Sales User"
+  }, 
+  {
+   "role": "Sales Person"
+  }
+ ]
+}

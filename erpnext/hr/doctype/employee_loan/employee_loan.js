@@ -1,6 +1,9 @@
 // Copyright (c) 2016, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
+cur_frm.add_fetch('employee', 'company', 'company');
+cur_frm.add_fetch('employee', 'business_unit', 'business_unit');
+
 frappe.ui.form.on('Employee Loan', {
 	onload: function (frm) {
 		frm.set_query("employee_loan_application", function () {

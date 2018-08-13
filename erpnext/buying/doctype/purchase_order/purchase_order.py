@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 import frappe
 import json
-from frappe.utils import cstr, flt, cint
+from frappe.utils import cstr, flt, cint, getdate
 from frappe import msgprint, _
 from frappe.model.mapper import get_mapped_doc
 from erpnext.controllers.buying_controller import BuyingController
@@ -32,6 +32,15 @@ class PurchaseOrder(BuyingController):
 			'source_field': 'stock_qty',
 			'percent_join_field': 'material_request'
 		}]
+
+	def autoname(self):
+		if self.is_import == 1 and not self.po_number:
+			frappe.throw(_("Purchase Orders Number is Mandatory for Import Orders."))
+			
+		if self.is_import == 1:
+			self.name = self.naming_series + self.po_number + "/" + str(getdate(self.transaction_date).year)
+		else:
+			return
 
 	def onload(self):
 		super(PurchaseOrder, self).onload()

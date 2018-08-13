@@ -15,6 +15,26 @@ frappe.ui.form.on("Workstation", {
 				}
 			})
 		}
+	}, 
+	refresh: function(frm) {
+		frm.toggle_enable(['hour_rate_electricity', 'hour_rate_water', 'hour_rate_gas'], false);
 	}
 });
 cur_frm.add_fetch("employee","employee_name","employee_name");
+cur_frm.fields_dict['cost_center'].get_query = function(doc, cdt, cdn) {
+	return {
+		filters: {
+			company: cur_frm.doc.company, 
+			business_unit: cur_frm.doc.business_unit, 
+			is_group: 0
+		}
+	};
+}
+cur_frm.fields_dict['labours'].grid.get_field("employee").get_query = function(doc, cdt, cdn) {
+	return {
+		filters: {
+			company: cur_frm.doc.company, 
+			business_unit: cur_frm.doc.business_unit
+		}
+	};
+}

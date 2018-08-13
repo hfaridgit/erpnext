@@ -211,6 +211,20 @@ def get_data():
 						"party_type": "Supplier"
 					}
 				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Supplier Credit Balance",
+					"doctype": "Supplier"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Forecast Monthly Materials Requirement",
+					"doctype": "Sales Forecast"
+				},
 			]
 		},
 		{

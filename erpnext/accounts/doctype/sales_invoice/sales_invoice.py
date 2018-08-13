@@ -687,6 +687,8 @@ class SalesInvoice(SellingController):
 					fixed_asset_gl_entries = get_gl_entries_on_asset_disposal(asset, item.base_net_amount)
 					for gle in fixed_asset_gl_entries:
 						gle["against"] = self.customer
+						gle["against_voucher"] = item.asset if item.asset else None
+						gle["against_voucher_type"] = "Asset" if item.asset else None
 						gl_entries.append(self.get_gl_dict(gle))
 
 					asset.db_set("disposal_date", self.posting_date)
@@ -697,6 +699,8 @@ class SalesInvoice(SellingController):
 						self.get_gl_dict({
 							"account": item.income_account,
 							"against": self.customer,
+							"against_voucher": item.asset if item.asset else None,
+							"against_voucher_type": "Asset" if item.asset else None,
 							"credit": item.base_net_amount,
 							"credit_in_account_currency": item.base_net_amount \
 								if account_currency==self.company_currency else item.net_amount,

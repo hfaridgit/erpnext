@@ -16,12 +16,12 @@ class Workstation(Document):
 	def validate(self):
 		labour_rate = 0
 		for labour in self.labours:
-			labour_rate += flt(labour.hour_rate * labour.cost_percent / 100)
+			labour_rate += flt(labour.hour_rate * flt(labour.cost_percent) / 100)
 		self.hour_rate_labour = labour_rate
 		costing = frappe.db.get_singles_dict('Costing Settings')
-		self.hour_rate_electricity = self.electricity_consumption_per_hour * flt(costing.electricity_rate if costing.electricity_rate else 0)
-		self.hour_rate_water = flt(self.water_consumption_per_hour * flt(costing.water_rate if costing.water_rate else 0))
-		self.hour_rate_gas = flt(self.gas_consumption_per_hour * flt(costing.gas_rate if costing.gas_rate else 0))
+		self.hour_rate_electricity = flt(self.electricity_consumption_per_hour) * flt(costing.electricity_rate if costing.electricity_rate else 0)
+		self.hour_rate_water = flt(self.water_consumption_per_hour) * flt(costing.water_rate if costing.water_rate else 0)
+		self.hour_rate_gas = flt(self.gas_consumption_per_hour) * flt(costing.gas_rate if costing.gas_rate else 0)
 		self.hour_rate = (flt(self.hour_rate_labour) + flt(self.hour_rate_electricity) + self.hour_rate_water + self.hour_rate_gas +
 			flt(self.hour_rate_consumable) + flt(self.hour_rate_rent))
 

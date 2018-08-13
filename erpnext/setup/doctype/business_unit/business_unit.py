@@ -34,5 +34,12 @@ def validate_bu(ref_doc):
 					i = 1
 			if i == 0:
 				frappe.throw(_("Row {0}: Business Unit is not correct for this Company.").format(d.idx))
+				
+	if ref_doc.doctype in ("Shift Changes","Expense Claim","Employee Loan","Salary Slip","Permit Application","Employee Punishment","Attendance","Leave Application","Employee Advance","Employee Custody","Employee Loan Application","Appraisal"):
+		emp = frappe.get_doc("Employee", ref_doc.employee)
+		if emp.company != ref_doc.company:
+			frappe.throw(_("Company is not correct for this Employee."))
+		if emp.business_unit != ref_doc.business_unit:
+			frappe.throw(_("Business Unit is not correct for this Employee."))
 	return
 	

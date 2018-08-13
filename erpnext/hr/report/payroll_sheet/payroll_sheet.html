@@ -1,0 +1,59 @@
+﻿<h2 class="text-center">{%= __("كشــف الصــراف") %}</h2>
+<h4 class="text-center">
+</h4>
+
+<h6 class="text-center">
+	<div dir="RTL">
+	<table border="0" width="100%">
+		<tr>
+			<td align="right">{%= __("الشركة:  ")%}	<b>{%= filters.company %}</b></td>
+			<td>{%= __("القطاع: ")%}	 <b>{%= filters.business_unit %}</b></td>
+			<td align="left">{%= __("عن شهر:  ")%}	<b>{%= filters.mm %}</b></td>
+			<td align="left">{%= __("الصرفية:  ")%}	<b>{%= filters.sst %}</b></td>
+		</tr>
+		<tr>
+			<td align="right">{%= __("إسم الصراف:  ")%}	</td>
+			<td></td>
+			<td></td>
+		</tr>
+	</table>
+	</div>
+</h6>
+
+<h5 class="text-center">
+</h5>
+<hr>
+<table class="table table-bordered">
+	<thead>
+		<tr>
+			<th style="width: 10%">{%= __("كودالموظف") %}</th>
+			<th style="width: 20%">{%= __("إسم الموظف") %}</th>
+			<th style="width: 15%">{%= __("إدارة") %}</th>
+			<th style="width: 10%">{%= __("الإستحقاقات") %}</th>
+			<th style="width: 10%">{%= __("الإستقطاعات") %}</th> 
+			<th style="width: 10%">{%= __("الأقساط") %}</th> 
+			<th style="width: 10%">{%= __("الصافى") %}</th> 
+			<th style="width: 15%">{%= __("التوقيع") %}</th> 
+		</tr>
+	</thead>
+	<tbody>
+		{% for(var i=0, l=data.length; i<l; i++) { %}
+			{% if (data[i]['كودالموظف'] == 'الإجمالى العام') { %}
+				<tr bgcolor="#FD8692">
+			{% } else { %}
+				<tr>
+			{% } %}
+
+				<td>{%= data[i]['كودالموظف'] %}</td>
+				<td>{%= data[i]['إسم الموظف'] %}</td>
+				<td>{%= data[i]['الإدارة'] %}</td>
+				<td>{%= data[i]['الإستحقاقات'] %}</td>
+				<td>{%= data[i]['الإستقطاعات'] %}</td>
+				<td>{%= data[i]['الأقساط'] %}</td>
+				<td>{%= data[i]['الصافى'] %}</td>
+				<td></td>
+			</tr>
+		{% } %}
+	</tbody>
+</table>
+<p class="text-right text-muted">Printed On {%= dateutil.str_to_user(dateutil.get_datetime_as_string()) %}</p>

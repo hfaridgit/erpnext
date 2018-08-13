@@ -568,12 +568,14 @@ def make_stock_entry(production_order_id, purpose, qty=None):
 			and not production_order.skip_transfer:
 		wip_warehouse = production_order.wip_warehouse
 	else:
-		wip_warehouse = None
+		#wip_warehouse = None
+		wip_warehouse = production_order.wip_warehouse
 
 	stock_entry = frappe.new_doc("Stock Entry")
 	stock_entry.purpose = purpose
 	stock_entry.production_order = production_order_id
 	stock_entry.company = production_order.company
+	stock_entry.business_unit = production_order.business_unit
 	stock_entry.from_bom = 1
 	stock_entry.bom_no = production_order.bom_no
 	stock_entry.use_multi_level_bom = production_order.use_multi_level_bom

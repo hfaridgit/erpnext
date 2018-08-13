@@ -83,3 +83,14 @@ cur_frm.fields_dict['items'].grid.get_field('bom_no').get_query = function(doc, 
 cur_frm.cscript.planned_start_date = function(doc, cdt, cdn) {
 	erpnext.utils.copy_value_in_all_row(doc, cdt, cdn, "items", "planned_start_date");
 }
+
+cur_frm.cscript.view_materials_required = function(doc, cdt, cdn) {
+	return $c_obj(doc, 'validate_data', '', function(r, rt) {
+		if (!r['exc']) {
+			$c_obj(doc, 'download_raw_materials', '', function(r, rt) {
+				var $view_wrapper = $(cur_frm.fields_dict.materials_html.wrapper).empty();
+				$(frappe.render_template("materials_details", {data: r.message})).appendTo($view_wrapper);
+			});
+		}
+	});
+}

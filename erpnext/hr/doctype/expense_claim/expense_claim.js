@@ -35,6 +35,7 @@ erpnext.hr.ExpenseClaimController = frappe.ui.form.Controller.extend({
 $.extend(cur_frm.cscript, new erpnext.hr.ExpenseClaimController({frm: cur_frm}));
 
 cur_frm.add_fetch('employee', 'company', 'company');
+cur_frm.add_fetch('employee', 'business_unit', 'business_unit');
 cur_frm.add_fetch('employee','employee_name','employee_name');
 
 cur_frm.cscript.onload = function(doc) {

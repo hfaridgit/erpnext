@@ -1,0 +1,16 @@
+<div>
+	<div class="table-responsive">
+		<table class="table table-bordered table-hover log-details-table">
+		
+			{% for row in data %}
+				<tr>
+				{% for(var i=0, l=row.length; i<l; i++) { %}
+					<td>
+						<span>{%= row[i] %} </span> 
+					</td>
+				{% } %}
+				</tr>
+			{% endfor %}
+		</table>
+	</div>
+</div>

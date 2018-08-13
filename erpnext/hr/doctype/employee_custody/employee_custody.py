@@ -7,4 +7,6 @@ import frappe
 from frappe.model.document import Document
 
 class EmployeeCustody(Document):
-	pass
+	def validate(self):
+		from erpnext.setup.doctype.business_unit.business_unit import validate_bu
+		validate_bu(self)

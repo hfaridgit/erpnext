@@ -1,0 +1,31 @@
+{
+ "add_total_row": 0, 
+ "apply_user_permissions": 1, 
+ "creation": "2018-08-11 18:41:01.545624", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "letter_head": "MIFAD", 
+ "modified": "2018-08-11 22:52:19.168044", 
+ "modified_by": "Administrator", 
+ "module": "HR", 
+ "name": "Abnormal Attendance Report", 
+ "owner": "Administrator", 
+ "query": "select employee as '\u0643\u0648\u062f \u0627\u0644\u0645\u0648\u0638\u0641::120', employee_name as '\u0625\u0633\u0645 \u0627\u0644\u0645\u0648\u0638\u0641::250', posting_date as '\u0627\u0644\u062a\u0627\u0631\u064a\u062e::100', \nshift as '\u0627\u0644\u0648\u0631\u062f\u064a\u0629::150', time_in as '\u0648\u0642\u062a \u0627\u0644\u062d\u0636\u0648\u0631::120', time_out as '\u0648\u0642\u062a \u0627\u0644\u0625\u0646\u0635\u0631\u0627\u0641::120' \nfrom `tabEmployee Transactions`\nwhere docstatus<2 and posting_date>=%(from_date)s and posting_date<=%(to_date)s and (early_exit_minutes>0 or lateness_minutes>0)\nand employee in (select name from `tabEmployee` where company=%(company)s and business_unit=%(business_unit)s) \norder by employee, posting_date", 
+ "ref_doctype": "Employee Transactions", 
+ "report_name": "Abnormal Attendance Report", 
+ "report_type": "Query Report", 
+ "roles": [
+  {
+   "role": "System Manager"
+  }, 
+  {
+   "role": "HR User"
+  }, 
+  {
+   "role": "HR Manager"
+  }
+ ]
+}

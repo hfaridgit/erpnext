@@ -409,6 +409,72 @@ def get_data():
 					"name": "Vehicle Expenses",
 					"doctype": "Vehicle"
 				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Total Kilometers from Actual Missions",
+					"doctype": "Mission Actual"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Abnormal Attendance Report",
+					"doctype": "Employee Transactions"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Leave Allocations",
+					"doctype": "Leave Allocation"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Leave Balances",
+					"doctype": "Leave Application"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Missions Report",
+					"doctype": "Leave Application"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Leaves Report",
+					"doctype": "Leave Application"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Permits Report",
+					"doctype": "Permit Application"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Punishments Report",
+					"doctype": "Employee Punishment"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Salary Sheet",
+					"doctype": "Salary Slip"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Payroll Sheet",
+					"doctype": "Salary Slip"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Social Insurance Sheet",
+					"doctype": "Salary Slip"
+				},
 
 			]
 		},

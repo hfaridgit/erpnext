@@ -1,0 +1,31 @@
+{
+ "add_total_row": 0, 
+ "apply_user_permissions": 1, 
+ "creation": "2018-08-08 22:22:05.197619", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "letter_head": "MIFAD", 
+ "modified": "2018-08-08 23:33:14.246260", 
+ "modified_by": "Administrator", 
+ "module": "HR", 
+ "name": "Permits Report", 
+ "owner": "Administrator", 
+ "query": "select l.employee as '\u0643\u0648\u062f \u0627\u0644\u0645\u0648\u0638\u0641::120', l.employee_name as '\u0625\u0633\u0645 \u0627\u0644\u0645\u0648\u0638\u0641::300', \nif(l.is_early_leave=1,'\u0645\u0633\u0627\u0626\u0649','\u0635\u0628\u0627\u062d\u0649') as '\u0646\u0648\u0639 \u0627\u0644\u0625\u0630\u0646::200', l.total_units as '\u0645\u062f\u0629 \u0627\u0644\u0625\u0630\u0646::120', \nl.permit_date as '\u0627\u0644\u062a\u0627\u0631\u064a\u062e::100', l.permit_balance as '\u0627\u0644\u0631\u0635\u064a\u062f::120', l.description as '\u0645\u0644\u0627\u062d\u0638\u0627\u062a::500'\nfrom `tabPermit Application` l\nwhere l.docstatus=1 and l.status='Approved' \nand l.permit_date>=%(from_date)s and l.permit_date<=%(to_date)s \nand l.employee in (select name from `tabEmployee` where company=%(company)s and business_unit=%(business_unit)s) \norder by permit_date, employee", 
+ "ref_doctype": "Permit Application", 
+ "report_name": "Permits Report", 
+ "report_type": "Query Report", 
+ "roles": [
+  {
+   "role": "System Manager"
+  }, 
+  {
+   "role": "HR Manager"
+  }, 
+  {
+   "role": "HR User"
+  }
+ ]
+}

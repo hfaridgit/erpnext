@@ -13,6 +13,8 @@ from erpnext.hr.utils import set_employee_name
 
 class Appraisal(Document):
 	def validate(self):
+		from erpnext.setup.doctype.business_unit.business_unit import validate_bu
+		validate_bu(self)
 		if not self.status:
 			self.status = "Draft"
 

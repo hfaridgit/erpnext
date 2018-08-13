@@ -288,6 +288,34 @@ def get_data():
 					"is_query_report": True,
 					"name": "Item Variant Details",
 					"doctype": "Item"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Batch-Wise Balance",
+					"doctype": "Stock Ledger Entry"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Batch-Wise Balance History Full",
+					"doctype": "Stock Ledger Entry"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Last Transaction in Warehouse",
+					"doctype": "Stock Ledger Entry"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Quantities in Specific Warehouses",
+					"doctype": "Bin"
 				}
 			]
 		},

@@ -2,7 +2,8 @@
 // License: GNU General Public License v3. See license.txt
 
 cur_frm.add_fetch('employee','employee_name','employee_name');
-cur_frm.add_fetch('employee','company','company');
+cur_frm.add_fetch('employee', 'company', 'company');
+cur_frm.add_fetch('employee', 'business_unit', 'business_unit');
 
 frappe.ui.form.on("Leave Application", {
 	onload: function(frm) {
@@ -22,18 +23,21 @@ frappe.ui.form.on("Leave Application", {
 		frm.set_query("employee", erpnext.queries.employee);
 
 		if(!frappe.user.has_role(['Administrator', 'System Manager', 'HR Manager', 'Leave Manager'])) {
-			frm.set_query("leave_type", function() {
-					return {
-						query : "erpnext.hr.doctype.leave_application.leave_application.get_leave_types",
-						filters: {
-							'employee': frm.doc.employee,
-							'from_date': frm.doc.from_date,
-							'to_date': frm.doc.to_date
-						}
-					}
-			});
+			var user_role = "user"
+		} else {
+			var user_role = "admin"
 		}
-
+		frm.set_query("leave_type", function() {
+				return {
+					query : "erpnext.hr.doctype.leave_application.leave_application.get_leave_types",
+					filters: {
+						'employee': frm.doc.employee,
+						'from_date': frm.doc.from_date,
+						'to_date': frm.doc.to_date, 
+						'user_role': user_role
+					}
+				}
+		});
 	},
 
 	validate: function(frm) {

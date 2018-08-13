@@ -1,0 +1,25 @@
+{
+ "add_total_row": 0, 
+ "apply_user_permissions": 1, 
+ "creation": "2018-08-10 16:39:33.678890", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "letter_head": "MIFAD", 
+ "modified": "2018-08-10 18:02:30.785466", 
+ "modified_by": "Administrator", 
+ "module": "HR", 
+ "name": "Payroll Sheet", 
+ "owner": "Administrator", 
+ "query": "select if(id=1,employee,'\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u0649 \u0627\u0644\u0639\u0627\u0645') as '\u0643\u0648\u062f\u0627\u0644\u0645\u0648\u0638\u0641::120', if(id=1,employee_name,'-') as '\u0625\u0633\u0645 \u0627\u0644\u0645\u0648\u0638\u0641::250',  \nif(id=1,department,'-') as '\u0627\u0644\u0625\u062f\u0627\u0631\u0629::170', gross_pay as '\u0627\u0644\u0625\u0633\u062a\u062d\u0642\u0627\u0642\u0627\u062a:Currency:100', \ntotal_deduction as '\u0627\u0644\u0625\u0633\u062a\u0642\u0637\u0627\u0639\u0627\u062a:Currency:100', total_loan_repayment as '\u0627\u0644\u0623\u0642\u0633\u0627\u0637:Currency:100', net_pay as '\u0627\u0644\u0635\u0627\u0641\u0649:Currency:100' from (\nselect 1 as id, ss.employee, ss.employee_name, ss.designation, ss.department, ss.name, round(ss.gross_pay,2) as gross_pay, round(ss.total_deduction,2) as total_deduction, round(ss.total_loan_repayment,2) as total_loan_repayment, round(ss.net_pay,2) as net_pay \nfrom `tabSalary Slip` ss\nwhere ss.docstatus=%(docst)s and month(ss.end_date)=%(mm)s and ss.salary_slip_type=%(sst)s and ss.company=%(company)s and ss.business_unit=%(business_unit)s\nunion all\nselect 9 as id, '9999999999', '','','','', round(sum(ss.gross_pay),2), round(sum(ss.total_deduction),2), round(sum(ss.total_loan_repayment),2), round(sum(ss.net_pay),2) from `tabSalary Slip` ss\nwhere ss.docstatus=%(docst)s and month(ss.end_date)=%(mm)s and ss.salary_slip_type=%(sst)s and ss.company=%(company)s and ss.business_unit=%(business_unit)s\norder by id, employee, name) h ", 
+ "ref_doctype": "Salary Slip", 
+ "report_name": "Payroll Sheet", 
+ "report_type": "Query Report", 
+ "roles": [
+  {
+   "role": "Salary Structure & Salary Slip"
+  }
+ ]
+}

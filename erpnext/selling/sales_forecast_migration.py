@@ -11,7 +11,7 @@ import frappe
 def migrate():
 	module = 'selling'
 	doctype = 'doctype'
-	names = ['sales_forecast', 'sales_forecast_month', 'sales_forecast_period']
+	names = ['sales_forecast', 'sales_forecast_item', 'sales_forecast_period']
 
 	for name in names:
 		frappe.reload_doc(module, doctype, name, True, True)

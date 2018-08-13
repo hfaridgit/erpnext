@@ -27,7 +27,7 @@
 
 frappe.query_reports["Shipment Trip Review"] = {
 	onload: function(report) {
-		report.page.add_inner_button(__("Get Data From Invoices"), function() {
+		report.page.add_inner_button(__("Get Data From Orders"), function() {
 				frappe.call({
 					method: "erpnext.buying.report.shipment_trip_review.shipment_trip_review.generate_data", 
 					callback: (r) => {
@@ -71,12 +71,12 @@ frappe.query_reports["Shipment Trip Review"] = {
 		var cell_color = "#FFFFFF"
 		if (dataContext.status == 'Completed') {
 			cell_color = "#A6FFA6";
-			if (columnDef.df.fieldname != 'purchase_order' && columnDef.df.fieldname != 'purchase_invoice' && columnDef.df.fieldname != 'item_code') {
+			if (columnDef.df.fieldname != 'purchase_order') {
 				columnDef.df.link_onclick = "#";
 			}
 			var $value = $(value).css({"display":"block","width":"100%","background-color": cell_color, "cursor": "default"});
 		} else {
-			if (columnDef.df.fieldname != 'purchase_order' && columnDef.df.fieldname != 'purchase_invoice' && columnDef.df.fieldname != 'item_code') {
+			if (columnDef.df.fieldname != 'purchase_order') {
 				columnDef.df.link_onclick = "frappe.query_reports['Shipment Trip Review'].change_data('" + columnDef.df.label + "', '" + 
 				columnDef.df.actualtype + "', '" + columnDef.df.actualoptions + "', '" + columnDef.df.fieldname + "', " + JSON.stringify(dataContext) + ")";
 			}

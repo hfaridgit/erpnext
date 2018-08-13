@@ -14,6 +14,11 @@ def get_data():
 				},
 				{
 					"type": "doctype",
+					"name": "Materials Planning Tool",
+					"description": _("Generate Material Requests (MRP) for Production Orders."),
+				},
+				{
+					"type": "doctype",
 					"name": "Production Planning Tool",
 					"description": _("Generate Material Requests (MRP) and Production Orders."),
 				},
@@ -30,6 +35,11 @@ def get_data():
 					"type": "doctype",
 					"name": "Timesheet",
 					"description": _("Time Sheet for manufacturing."),
+				},
+				{
+					"type": "doctype",
+					"name": "Production Time Log Tool",
+					"description": _("Time log for Operations."),
 				},
 
 			]
@@ -122,11 +132,44 @@ def get_data():
 					"is_query_report": True,
 					"name": "Completed Production Orders",
 					"doctype": "Production Order"
-				},{ 
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Production Order Quantity Variance",
+					"doctype": "Production Order"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Production Order Output Quantity Variance",
+					"doctype": "Production Order"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Production Variance Report",
+					"doctype": "Production Order"
+				},
+				{ 
 					"type": "page",
 					"name": "production-analytics",
 					"label": _("Production Analytics"),  
 					"icon": "fa fa-bar-chart",
+				},
+				{ 
+					"type": "report",
+					"is_query_report": True,
+					"name": "Operation Cost Distribution",
+					"label": _("Operation Cost Distribution"),  
+					"doctype": "Timesheet"
+				},
+				{ 
+					"type": "report",
+					"is_query_report": True,
+					"name": "Operation Cost Distribution By Cost Center",
+					"label": _("Operation Cost Distribution By Cost Center"),  
+					"doctype": "Timesheet"
 				},
 				{
 					"type": "report",
@@ -139,6 +182,63 @@ def get_data():
 					"is_query_report": True,
 					"name": "BOM Stock Report",
 					"doctype": "BOM"
+				}
+			]
+		},
+		{
+			"label": _("Stock Reports"),
+			"icon": "fa fa-list",
+			"items": [
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Purchase Order Items To Be Received",
+					"doctype": "Purchase Receipt"
+				},
+				{
+					"type": "report",
+					"name": "Item Shortage Report",
+					"route": "Report/Bin/Item Shortage Report",
+					"doctype": "Purchase Receipt"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Batch-Wise Balance History",
+					"doctype": "Batch"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Batch Item Expiry Status",
+					"doctype": "Stock Ledger Entry"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Batch-Wise Balance",
+					"doctype": "Stock Ledger Entry"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Batch-Wise Balance History Full",
+					"doctype": "Stock Ledger Entry"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Item Balance (Simple)",
+					"doctype": "Bin"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Quantities in Specific Warehouses",
+					"doctype": "Bin"
 				}
 			]
 		},

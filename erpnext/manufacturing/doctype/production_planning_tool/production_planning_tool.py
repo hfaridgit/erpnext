@@ -35,11 +35,12 @@ class ProductionPlanningTool(Document):
 			item_filter += " and so_item.item_code = %(item)s"
 
 		open_so = frappe.db.sql("""
-			select distinct so.name, so.transaction_date, so.customer, so.base_grand_total
+			select distinct so.name, so.transaction_date, so.delivery_date, so.customer, so.base_grand_total
 			from `tabSales Order` so, `tabSales Order Item` so_item
 			where so_item.parent = so.name
 				and so.docstatus = 1 and so.status not in ("Stopped", "Closed")
 				and so.company = %(company)s
+				and so.business_unit = %(business_unit)s
 				and so_item.qty > so_item.delivered_qty {0} {1}
 				and (exists (select name from `tabBOM` bom where bom.item=so_item.item_code
 						and bom.is_active = 1)
@@ -53,6 +54,7 @@ class ProductionPlanningTool(Document):
 				"customer": self.customer,
 				"project": self.project,
 				"item": self.fg_item,
+				"business_unit": self.business_unit, 
 				"company": self.company
 			}, as_dict=1)
 
@@ -68,6 +70,7 @@ class ProductionPlanningTool(Document):
 				pp_so = self.append('sales_orders', {})
 				pp_so.sales_order = r['name']
 				pp_so.sales_order_date = cstr(r['transaction_date'])
+				pp_so.delivery_date = cstr(r['delivery_date'])
 				pp_so.customer = cstr(r['customer'])
 				pp_so.grand_total = flt(r['base_grand_total'])
 
@@ -242,6 +245,7 @@ class ProductionPlanningTool(Document):
 				"description"			: d.description,
 				"stock_uom"				: d.stock_uom,
 				"company"				: self.company,
+				"business_unit"			: self.business_unit,
 				"wip_warehouse"			: "",
 				"fg_warehouse"			: d.warehouse,
 				"status"				: "Draft",
@@ -517,6 +521,7 @@ class ProductionPlanningTool(Document):
 					"transaction_date": nowdate(),
 					"status": "Draft",
 					"company": self.company,
+					"business_unit": self.business_unit,
 					"requested_by": frappe.session.user,
 					"schedule_date": add_days(nowdate(), cint(item_wrapper.lead_time_days)),
 				})
@@ -532,6 +537,7 @@ class ProductionPlanningTool(Document):
 						"uom": item_wrapper.stock_uom,
 						"item_group": item_wrapper.item_group,
 						"brand": item_wrapper.brand,
+						"business_unit": self.business_unit,
 						"qty": requested_qty,
 						"schedule_date": add_days(nowdate(), cint(item_wrapper.lead_time_days)),
 						"warehouse": self.purchase_request_for_warehouse,

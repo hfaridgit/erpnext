@@ -1,0 +1,44 @@
+﻿<h2 class="text-center">{%= __("ترصيد الأجازات") %}</h2>
+<h4 class="text-center">
+</h4>
+
+<h6 class="text-center">
+	<div dir="RTL">
+	<table border="0" width="100%">
+		<tr>
+			<td align="right">{%= __("الشركة: ")%}	{%= filters.company %}</td>
+			<td>{%= __("القطاع: ")%}	 {%= filters.business_unit %}</td>
+			<td align="left">{%= __("عن عام: ")%}	{%= filters.year %}</td>
+		</tr>
+	</table>
+	</div>
+</h6>
+
+<h5 class="text-center">
+</h5>
+<hr>
+<table class="table table-bordered">
+	<thead>
+		<tr>
+			<th style="width: 15%">{%= __("كود الموظف") %}</th>
+			<th style="width: 40%">{%= __("إسم الموظف") %}</th>
+			<th style="width: 10%">{%= __("إعتيادى") %}</th>
+			<th style="width: 10%">{%= __("عارضة") %}</th>
+			<th style="width: 10%">{%= __("مرضى") %}</th> 
+			<th style="width: 15%">{%= __("إعتيادية مرحلة") %}</th> 
+		</tr>
+	</thead>
+	<tbody>
+		{% for(var i=0, l=data.length; i<l; i++) { %}
+			<tr>
+				<td>{%= data[i]['كود الموظف'] %}</td>
+				<td>{%= data[i]['إسم الموظف'] %}</td>
+				<td>{%= data[i]['إعتيادى'] %}</td>
+				<td>{%= data[i]['عارضة'] %}</td>
+				<td>{%= data[i]['مرضى'] %}</td>
+				<td>{%= data[i]['إعتيادية مرحلة'] %}</td>
+			</tr>
+		{% } %}
+	</tbody>
+</table>
+<p class="text-right text-muted">Printed On {%= dateutil.str_to_user(dateutil.get_datetime_as_string()) %}</p>

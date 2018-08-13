@@ -22,7 +22,9 @@ class EmployeeLoan(AccountsController):
 			self.rate_of_interest = frappe.db.get_value("Loan Type", self.loan_type, "rate_of_interest")
 		if self.repayment_method == "Repay Over Number of Periods":
 			self.monthly_repayment_amount = get_monthly_repayment_amount(self.repayment_method, self.loan_amount, self.rate_of_interest, self.repayment_periods)
-
+		
+		from erpnext.hr.doctype.employee_loan_application.employee_loan_application import validate_loan_amount
+		validate_loan_amount(self)
 		self.make_repayment_schedule()
 		self.set_repayment_period()
 		self.calculate_totals()
@@ -77,8 +79,11 @@ class EmployeeLoan(AccountsController):
 				"total_payment": total_payment,
 				"balance_loan_amount": balance_amount
 			})
-
-			next_payment_date = add_months(payment_date, 1)
+			
+			if not self.duration:
+				self.duration = 0
+			
+			next_payment_date = add_months(payment_date, self.duration if self.duration > 1 else self.duration+1)
 			payment_date = next_payment_date
 
 	def set_repayment_period(self):

@@ -4,10 +4,16 @@
 frappe.ui.form.on('Change Leave Approver Tool', {
 	refresh: function(frm) {
 		frm.disable_save();
+		if (frm.hhh==1) {
+			frm.set_value("company", undefined);
+			frm.hhh = 0;
+		}
+		erpnext.change_leave_approver_tool.load_employees(frm);
 	},
 	
 	onload: function(frm) {
 		frm.doc.department = frm.doc.branch = frm.doc.company = frm.doc.business_unit = "All";
+		frm.hhh = 1;
 		erpnext.change_leave_approver_tool.load_employees(frm);
 	},
 
@@ -24,6 +30,9 @@ frappe.ui.form.on('Change Leave Approver Tool', {
 	},
 
 	company: function(frm) {
+		erpnext.change_leave_approver_tool.load_employees(frm);
+	}, 
+	business_unit: function(frm) {
 		erpnext.change_leave_approver_tool.load_employees(frm);
 	}
 	

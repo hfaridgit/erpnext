@@ -417,6 +417,8 @@ def raise_production_orders(material_request):
 				prod_order.material_request_item = d.name
 				prod_order.planned_start_date = mr.transaction_date
 				prod_order.company = mr.company
+				# @custom Add business unit
+				prod_order.business_unit = mr.business_unit
 				prod_order.save()
 				production_orders.append(prod_order.name)
 			else:

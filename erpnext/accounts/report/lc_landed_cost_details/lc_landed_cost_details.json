@@ -1,0 +1,30 @@
+{
+ "add_total_row": 0, 
+ "apply_user_permissions": 1, 
+ "creation": "2018-06-13 23:31:26.339189", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "modified": "2018-06-13 23:35:31.807318", 
+ "modified_by": "Administrator", 
+ "module": "Accounts", 
+ "name": "LC Landed Cost Details", 
+ "owner": "Administrator", 
+ "query": "select lct.creation as '\u0627\u0644\u062a\u0627\u0631\u064a\u062e::100', lct.description as '\u0627\u0644\u0645\u0635\u0631\u0648\u0641::300', lct.amount as '\u0627\u0644\u0645\u0628\u0644\u063a:Currency:120', \nlci.receipt_document_type as '\u0646\u0648\u0639 \u0627\u0644\u0645\u0633\u062a\u0646\u062f::120', lci.receipt_document as '\u0627\u0644\u0645\u0633\u062a\u0646\u062f:Link/Purchase Receipt:120', \nlcpr.supplier as '\u0627\u0644\u0645\u0648\u0631\u062f:Link/Supplier:200', lci.item_code as '\u0627\u0644\u0635\u0646\u0641:Link/Item:150', \nlci.qty as '\u0627\u0644\u0643\u0645\u064a\u0629::100', lci.amount as '\u0627\u0644\u0642\u064a\u0645\u0629:Currency:100',\nlc.name as '\u0645\u0633\u062a\u0646\u062f \u0627\u0644\u0645\u0635\u0631\u0648\u0641:Link/Landed Cost Voucher:120', lc.company as '\u0627\u0644\u0634\u0631\u0643\u0629::150', lc.business_unit as '\u0627\u0644\u0642\u0637\u0627\u0639::150'\nfrom `tabLanded Cost Voucher` lc \nleft join `tabLanded Cost Item` lci on lc.name=lci.parent\nleft join `tabLanded Cost Purchase Receipt` lcpr on lc.name=lcpr.parent\nleft join `tabLanded Cost Taxes and Charges` lct on lc.name=lct.parent\nwhere lc.lc_no=%(lc_no)s and lc.company=%(company)s", 
+ "ref_doctype": "Letter of Credit", 
+ "report_name": "LC Landed Cost Details", 
+ "report_type": "Query Report", 
+ "roles": [
+  {
+   "role": "System Manager"
+  }, 
+  {
+   "role": "Accounts User"
+  }, 
+  {
+   "role": "Accounts Manager"
+  }
+ ]
+}

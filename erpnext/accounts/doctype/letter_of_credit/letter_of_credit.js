@@ -12,6 +12,13 @@ frappe.ui.form.on('Letter of Credit', {
 				};
 				frappe.set_route("query-report", "LC Accounting Ledger");
 			}, __("View"));
+			frm.add_custom_button(__('Landed Cost Details'), function() {
+				frappe.route_options = {
+					lc_no: frm.doc.name, 
+					company: frm.doc.company
+				};
+				frappe.set_route("query-report", "LC Landed Cost Details");
+			}, __("View"));
 		}
 		if(frm.doc.docstatus == 1 && frm.doc.status=="Active") {
 			frm.add_custom_button(__('Close'), function() {
