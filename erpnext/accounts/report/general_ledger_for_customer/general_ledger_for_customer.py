@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2013, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
@@ -111,7 +112,16 @@ def get_gl_entries(filters):
 			gle.remarks, gle.against, gle.is_opening {select_fields},
 			c.customer_name, c.territory,
 			si.due_date,
-			pe.mode_of_payment
+			pe.mode_of_payment,
+			case si.is_return
+			when 0 then 'مبيعات آجلة'
+			when 1 then 'مدفوعات آجلة'
+			else
+				case pe.payment_type
+				when 'Receive' then 'متحصلات نقدا'
+				when 'Pay' then 'مدفوعات نقدا'
+				end
+			end ar_voucher_type
 		from `tabGL Entry` gle
 		left join `tabCustomer` c on c.name = gle.party
 		left join `tabSales Invoice` si on gle.voucher_type = 'Sales Invoice' and si.name = gle.voucher_no
@@ -332,7 +342,7 @@ def get_columns(filters):
 		},
 		{
 			"label": _("Voucher Type"),
-			"fieldname": "voucher_type",
+			"fieldname": "ar_voucher_type",
 			"width": 120
 		},
 		{

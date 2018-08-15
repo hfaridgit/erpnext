@@ -8,6 +8,7 @@ from frappe.utils import cstr, flt, cint, nowdate, add_days, comma_and
 from frappe import msgprint, _
 
 from frappe.model.document import Document
+from erpnext.stock.get_item_details import get_conversion_factor
 from erpnext.manufacturing.doctype.bom.bom import validate_bom_no
 from erpnext.manufacturing.doctype.production_order.production_order import get_item_details
 
@@ -79,9 +80,10 @@ class MaterialsPlanningTool(Document):
 			item_condition = ' and po.production_item = "{0}"'.format(frappe.db.escape(self.fg_item))
 
 		items = frappe.db.sql("""select distinct poi.item_code, poi.description, po.buffer_warehouse,
-			sum(poi.required_qty*(po.qty - po.produced_qty)/po.qty) as pending_qty
+			sum(poi.required_qty*(po.qty - po.produced_qty)/po.qty) as pending_qty, b.actual_qty
 			from `tabProduction Order Item` poi
 			left join `tabProduction Order` po on po.name=poi.parent
+			left join `tabBin` b on b.warehouse=po.buffer_warehouse and b.item_code=poi.item_code
 			where poi.parent in (%s)
 			and exists (select name from `tabBOM` bom where bom.item=po.production_item
 					and bom.is_active = 1) %s
@@ -102,6 +104,7 @@ class MaterialsPlanningTool(Document):
 				pi.description				= item_details[0] and item_details[0].description or ''
 				pi.stock_uom				= item_details[0] and item_details[0].stock_uom or ''
 				pi.pending_qty				= flt(p['pending_qty'])
+				pi.actual_qty				= flt(p['actual_qty'])
 
 	def validate_data(self):
 		self.validate_company()
@@ -130,17 +133,23 @@ class MaterialsPlanningTool(Document):
 			})
 			for item in self.items:
 				item_wrapper = frappe.get_doc("Item", item.item_code)
+				if not item_wrapper.stock_issue_uom:
+					si_uom = item_wrapper.stock_uom
+				else:
+					si_uom = item_wrapper.stock_issue_uom
+				conversion_factor = get_conversion_factor(item.item_code, si_uom).get("conversion_factor") or 1.0
+				p_qty = flt(item.pending_qty / conversion_factor)
 				material_request.append("items", {
 					"doctype": "Material Request Item",
 					"__islocal": 1,
 					"item_code": item.item_code,
 					"item_name": item_wrapper.item_name,
 					"description": item_wrapper.description,
-					"uom": item_wrapper.stock_uom,
+					"uom": si_uom,
 					"item_group": item_wrapper.item_group,
 					"brand": item_wrapper.brand,
 					"business_unit": self.business_unit,
-					"qty": item.pending_qty,
+					"qty": (int(p_qty) + 1) if (p_qty - int(p_qty) > 0) else p_qty,
 					"schedule_date": self.requested_by_date,
 					"warehouse": item.warehouse,
 				})

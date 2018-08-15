@@ -282,6 +282,48 @@ def get_data():
 					"name": "Sales Order Trends",
 					"doctype": "Sales Order"
 				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Cash Flow for Sales Weak",
+					"doctype": "Sales Invoice"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Sales Forecast and Actual",
+					"doctype": "Sales Invoice"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "General Ledger for Customer",
+					"doctype": "GL Entry"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Cash Flow for Sales",
+					"doctype": "Sales Invoice"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Missions Report",
+					"doctype": "Leave Application"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Sales Person-wise Transaction Summary B",
+					"doctype": "Sales Invoice"
+				},
 			]
 		},
 		{

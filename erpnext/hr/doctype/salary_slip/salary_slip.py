@@ -172,6 +172,8 @@ class SalarySlip(TransactionBase):
 
 	def check_sal_struct(self, joining_date, relieving_date):
 		cond = ''
+		if not relieving_date:
+			relieving_date = '2099-12-31'
 		if self.payroll_frequency:
 			cond = """and payroll_frequency = '%(payroll_frequency)s'""" % {"payroll_frequency": self.payroll_frequency}
 

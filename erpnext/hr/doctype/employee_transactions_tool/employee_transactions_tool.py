@@ -165,13 +165,19 @@ class EmployeeTransactionsTool(Document):
 		frappe.msgprint(_("Transactions Updated Successfuly."))
 		
 	def apply_punishments(self):
+		cond = self.get_employees()
+		start_lateness_minute = 0
+		minimum_from = frappe.db.sql("""select min(from_m) from `tabPunishment Rule` where rule_type='Lateness'""")
+		if minimum_from:
+			start_lateness_minute = minimum_from[0][0]
 		trans = frappe.db.sql("""select et.name, et.employee, et.shift, et.posting_date, et.lateness_minutes, et.early_exit_minutes, et.bus_delay, 
 							if(time(et.shift_late_time)<et.time_in, TIMESTAMPDIFF(MINUTE, time(et.shift_late_time), et.time_in),0) as lateness, 
-							ifnull(p.total_units,0)*60 as permit_minutes, p.is_early_leave 
+							ifnull(p.total_units,0)*60 as permit_minutes, ifnull(p.is_early_leave,0) as is_early_leave 
 							from `tabEmployee Transactions` et 
 							left join `tabPermit Application` p on p.name=et.permit_application 
 							where et.docstatus=0 and (et.lateness_minutes>0 
-							or et.early_exit_minutes>0) and et.ignore_lateness=0 and et.transaction_year=%(trans_year)s and et.transaction_month=%(trans_month)s""", 
+							or et.early_exit_minutes>0) and et.ignore_lateness=0 and et.transaction_year=%(trans_year)s and et.transaction_month=%(trans_month)s
+							and et.employee in (select name from `tabEmployee` where status='Active' {condition})""".format(condition=cond), 
 							{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
 		for t in trans:
 			if not t.shift:
@@ -186,9 +192,9 @@ class EmployeeTransactionsTool(Document):
 				permit_minutes = t.permit_minutes
 				permit_minutes2 = 0
 			actual_late_minutes = t.lateness_minutes - permit_minutes
-			if t.lateness > 0 and actual_late_minutes > 0 and t.bus_delay == 0:
+			if t.lateness > 0 and actual_late_minutes >= start_lateness_minute and t.bus_delay == 0:
 				punishment = frappe.db.sql("""select name, punishment_type from `tabPunishment Rule` 
-							where rule_type='Lateness' and (shift_type=%(shift_type)s or isnull(shift_type)) 
+							where rule_type='Lateness' and (shift_type=%(shift_type)s or isnull(shift_type) or trim(shift_type)='') 
 							and from_m<=%(late_mintues)s and to_m>=%(late_mintues)s order by shift_type DESC limit 1""", 
 							{"late_mintues": actual_late_minutes, "shift_type": shift_type}, as_dict=1)
 				if punishment:
@@ -207,12 +213,12 @@ class EmployeeTransactionsTool(Document):
 					frappe.db.set_value("Employee Transactions", t.name, "punishment", p.name)
 					frappe.db.set_value("Employee Transactions", t.name, "punishment_name", p.punishment_name)
 				else:
-					frappe.throw(_("No Punishment Rules Defined for Lateness to Apply."))
+					frappe.throw(_("No Punishment Rules Defined for Lateness to Apply. Employee {0}, Transaction {1}").format(t.employee, t.name))
 			
 			actual_late_minutes = t.early_exit_minutes - permit_minutes2
 			if actual_late_minutes > 0:
 				punishment = frappe.db.sql("""select name, punishment_type from `tabPunishment Rule` 
-							where rule_type='Early Exit' and (shift_type=%(shift_type)s or isnull(shift_type)) 
+							where rule_type='Early Exit' and (shift_type=%(shift_type)s or isnull(shift_type) or trim(shift_type)='') 
 							order by shift_type DESC limit 1""", 
 							{"shift_type": shift_type}, as_dict=1)
 				if punishment:
@@ -242,7 +248,8 @@ class EmployeeTransactionsTool(Document):
 								left join `tabShifts` s on s.name=et.shift
 								where et.docstatus=0 
 								and et.transaction_year=%(trans_year)s and et.transaction_month=%(trans_month)s) a
-								where  no_punch>0 and is_holiday=0 and is_leave=0 and is_mission=0""", 
+								where  no_punch>0 and is_holiday=0 and is_leave=0 and is_mission=0
+								and employee in (select name from `tabEmployee` where status='Active' {condition})""".format(condition=cond), 
 								{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
 		for t in trans:
 			if not t.shift:
@@ -275,9 +282,11 @@ class EmployeeTransactionsTool(Document):
 				
 
 	def delete_punishments_unposted(self):
+		cond = self.get_employees()
 		trans = frappe.db.sql("""select name, punishment from `tabEmployee Transactions` where (lateness_minutes>0 or early_exit_minutes>0) 
 							and ignore_lateness=0 and transaction_year=%(trans_year)s and transaction_month=%(trans_month)s
-							and payroll_processed=0 and not isnull(punishment)""", 
+							and payroll_processed=0 and not isnull(punishment)
+							and employee in (select name from `tabEmployee` where 1=1 {condition})""".format(condition=cond), 
 							{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
 		for t in trans:
 			frappe.db.set_value("Employee Transactions", t.name, "punishment", None)
@@ -289,7 +298,8 @@ class EmployeeTransactionsTool(Document):
 		
 		trans = frappe.db.sql("""select name, punishment from `tabEmployee Transactions` where (ifnull(time_in,0)=0 or ifnull(time_out,0)=0) 
 							and transaction_year=%(trans_year)s and transaction_month=%(trans_month)s
-							and payroll_processed=0 and not isnull(punishment)""", 
+							and payroll_processed=0 and not isnull(punishment)
+							and employee in (select name from `tabEmployee` where 1=1 {condition})""".format(condition=cond), 
 							{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
 		for t in trans:
 			frappe.db.set_value("Employee Transactions", t.name, "punishment", None)
@@ -301,9 +311,11 @@ class EmployeeTransactionsTool(Document):
 		frappe.db.commit()
 
 	def delete_punishments(self):
+		cond = self.get_employees()
 		trans = frappe.db.sql("""select name, punishment from `tabEmployee Transactions` where docstatus=1 and (lateness_minutes>0 or early_exit_minutes>0) 
 							and ignore_lateness=0 and transaction_year=%(trans_year)s and transaction_month=%(trans_month)s
-							and payroll_processed=0 and not isnull(punishment)""", 
+							and payroll_processed=0 and not isnull(punishment)
+							and employee in (select name from `tabEmployee` where 1=1 {condition})""".format(condition=cond), 
 							{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
 		for t in trans:
 			frappe.db.set_value("Employee Transactions", t.name, "punishment", None)
@@ -315,7 +327,8 @@ class EmployeeTransactionsTool(Document):
 
 		trans = frappe.db.sql("""select name, punishment from `tabEmployee Transactions` where docstatus=1 and (ifnull(time_in,0)=0 or ifnull(time_out,0)=0) 
 							and transaction_year=%(trans_year)s and transaction_month=%(trans_month)s
-							and payroll_processed=0 and not isnull(punishment)""", 
+							and payroll_processed=0 and not isnull(punishment)
+							and employee in (select name from `tabEmployee` where 1=1 {condition})""".format(condition=cond), 
 							{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
 		for t in trans:
 			frappe.db.set_value("Employee Transactions", t.name, "punishment", None)

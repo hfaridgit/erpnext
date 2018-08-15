@@ -40,6 +40,7 @@ def validate_bu(ref_doc):
 		if emp.company != ref_doc.company:
 			frappe.throw(_("Company is not correct for this Employee."))
 		if emp.business_unit != ref_doc.business_unit:
-			frappe.throw(_("Business Unit is not correct for this Employee."))
+			frappe.throw(_("Business Unit is not correct for this Employee. {0}").format(ref_doc.employee))
+			
 	return
 	

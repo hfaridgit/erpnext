@@ -30,15 +30,16 @@ def get_data(filters):
 			FROM `tabStock Ledger Entry` AS `sle`
 			LEFT JOIN `tabItem` AS `i` ON i.name = sle.item_code
 			{0}
+			and sle.warehouse in (select name from `tabWarehouse` where 1=1 {1})
 			GROUP BY sle.batch_no, sle.warehouse
 			ORDER BY sle.item_code, sle.batch_no, sle.warehouse
-		""".format(get_conditions(filters)),
+		""".format(get_conditions(filters), get_match_cond('Warehouse')),
 		filters
 	)
 
 def get_conditions(filters):
 	conditions = "WHERE sle.batch_no IS NOT NULL"
-	conditions += get_match_cond('Warehouse')
+	#conditions += get_match_cond('Warehouse')
 
 	if filters.get('item_code'):
 		conditions += " AND sle.item_code = %(item_code)s"

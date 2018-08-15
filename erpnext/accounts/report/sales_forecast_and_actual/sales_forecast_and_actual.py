@@ -58,11 +58,50 @@ class Report(object):
 				"width": 120
 			},
 			{
-				"label": _("Item"),
+				"label": _("Customer Name"),
+				"fieldname": "customer_name",
+				"fieldtype": "Data",
+				"width": 120
+			},
+			{
+				"label": _("Customer Group"),
+				"fieldname": "customer_group",
+				"fieldtype": "Link",
+				"options": "Customer Group",
+				"width": 120
+			},
+			{
+				"label": _("Territory"),
+				"fieldname": "territory",
+				"fieldtype": "Link",
+				"options": "Territory",
+				"width": 120
+			},
+			{
+				"label": _("Credit Limits"),
+				"fieldname": "credit_limits",
+				"fieldtype": "Currency",
+				"width": 120
+			},
+			{
+				"label": _("Default Payment Terms Template"),
+				"fieldname": "payment_terms",
+				"fieldtype": "Link",
+				"options": "Payment Terms Template",
+				"width": 120
+			},
+			{
+				"label": _("Item Code"),
 				"fieldname": "item",
 				"fieldtype": "Link",
 				"options": "Item",
 				"width": 120
+			},
+			{
+				"label": _("Item Name"),
+				"fieldname": "item_name",
+				"fieldtype": "Data",
+				"width": 160
 			}
 		]
 
@@ -99,12 +138,20 @@ class Report(object):
 			"""
 				SELECT
 					sf.name AS 'sales_forecast',
-					sf.sales_person AS 'sales_person',
-					sf.customer AS 'customer',
-					sfi.item AS 'item',
+					sf.sales_person,
+					sf.customer,
+					c.customer_name,
+					c.customer_group,
+					c.territory,
+					c.credit_limit,
+					c.payment_terms,
+					sfi.item,
+					i.item_name,
 					{select_columns}
 				FROM `tabSales Forecast` AS `sf`
 				LEFT JOIN `tabSales Forecast Item` AS `sfi` ON sfi.parent = sf.name
+				LEFT JOIN `tabItem` AS `i` ON i.name = sfi.item
+				LEFT JOIN `tabCustomer` AS `c` ON c.name = sf.customer
 				WHERE sf.company = %(company)s
 				AND sf.business_unit = %(business_unit)s
 				AND sf.year = %(year)s
