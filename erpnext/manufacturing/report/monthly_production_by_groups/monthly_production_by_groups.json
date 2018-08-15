@@ -1,0 +1,28 @@
+{
+ "add_total_row": 0, 
+ "apply_user_permissions": 1, 
+ "creation": "2018-08-15 13:27:46.122855", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "letter_head": "MIFAD", 
+ "modified": "2018-08-15 13:32:52.933946", 
+ "modified_by": "Administrator", 
+ "module": "Manufacturing", 
+ "name": "Monthly Production By Groups", 
+ "owner": "Administrator", 
+ "query": "select i.item_group as 'Group::300', po.stock_uom as 'UOM::100', \nsum(if(month(po.actual_end_date)=1, po.produced_qty,0)) as January, \nsum(if(month(po.actual_end_date)=2, po.produced_qty,0)) as February, \nsum(if(month(po.actual_end_date)=3, po.produced_qty,0)) as March, \nsum(if(month(po.actual_end_date)=4, po.produced_qty,0)) as April, \nsum(if(month(po.actual_end_date)=5, po.produced_qty,0)) as May, \nsum(if(month(po.actual_end_date)=6, po.produced_qty,0)) as June, \nsum(if(month(po.actual_end_date)=7, po.produced_qty,0)) as July, \nsum(if(month(po.actual_end_date)=8, po.produced_qty,0)) as August, \nsum(if(month(po.actual_end_date)=9, po.produced_qty,0)) as September, \nsum(if(month(po.actual_end_date)=10, po.produced_qty,0)) as October, \nsum(if(month(po.actual_end_date)=11, po.produced_qty,0)) as November, \nsum(if(month(po.actual_end_date)=12, po.produced_qty,0)) as December \nfrom `tabProduction Order` po\nleft join `tabItem` i on po.production_item=i.name\nwhere po.status in (\"Completed\",\"Stopped\") and po.docstatus=1\nand year(po.actual_end_date)=%(year)s and po.company=%(company)s and po.business_unit=%(business_unit)s\ngroup by i.item_group, po.stock_uom", 
+ "ref_doctype": "Production Order", 
+ "report_name": "Monthly Production By Groups", 
+ "report_type": "Query Report", 
+ "roles": [
+  {
+   "role": "Manufacturing User"
+  }, 
+  {
+   "role": "Manufacturing Manager"
+  }
+ ]
+}
