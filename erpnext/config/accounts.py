@@ -92,6 +92,12 @@ def get_data():
 				},
 				{
 					"type": "report",
+					"name":"Operation General Ledger",
+					"doctype": "GL Entry",
+					"is_query_report": True,
+				},
+				{
+					"type": "report",
 					"name":"General Ledger with Parent Account",
 					"doctype": "GL Entry",
 					"is_query_report": True,

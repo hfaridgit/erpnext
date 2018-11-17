@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import frappe, erpnext
 import frappe.defaults
 from frappe.utils import cint, flt
+from frappe.model.naming import make_autoname
 from frappe import _, msgprint, throw
 from erpnext.accounts.party import get_party_account, get_due_date
 from erpnext.controllers.stock_controller import update_gl_entries_after
@@ -53,6 +54,15 @@ class SalesInvoice(SellingController):
 		else:
 			self.indicator_color = "green"
 			self.indicator_title = _("Paid")
+
+	def autoname(self):
+		if self.is_cancelled:
+			if self.is_cancelled==1:
+				self.name = "C-" + self.return_against
+			else:
+				self.name = make_autoname(self.naming_series + '.#####')
+		else:
+			self.name = make_autoname(self.naming_series + '.#####')
 
 	def validate(self):
 		super(SalesInvoice, self).validate()
@@ -103,6 +113,8 @@ class SalesInvoice(SellingController):
 		self.set_status()
 		if self.is_pos and not self.is_return:
 			self.verify_payment_amount_is_positive()
+		if self.docstatus == 1:
+			self.submitted_by = frappe.session['user']
 
 	def before_save(self):
 		set_account_for_mode_of_payment(self)
@@ -680,7 +692,7 @@ class SalesInvoice(SellingController):
 	def make_item_gl_entries(self, gl_entries):
 		# income account gl entries
 		for item in self.get("items"):
-			if flt(item.base_net_amount):
+			if flt(item.base_net_amount) or item.is_fixed_asset:
 				if item.is_fixed_asset:
 					asset = frappe.get_doc("Asset", item.asset)
 
@@ -691,7 +703,7 @@ class SalesInvoice(SellingController):
 						gle["against_voucher_type"] = "Asset" if item.asset else None
 						gl_entries.append(self.get_gl_dict(gle))
 
-					asset.db_set("disposal_date", self.posting_date)
+					asset.db_set("disposal_date", self.posting_date if self.docstatus==1 else None)
 					asset.set_status("Sold" if self.docstatus==1 else None)
 				else:
 					account_currency = get_account_currency(item.income_account)

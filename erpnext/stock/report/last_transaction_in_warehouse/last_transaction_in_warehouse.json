@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2018-06-04 15:47:09.069709", 
+ "modified": "2018-08-29 16:58:33.066130", 
  "modified_by": "Administrator", 
  "module": "Stock", 
  "name": "Last Transaction in Warehouse", 
@@ -17,7 +17,7 @@
  "report_type": "Script Report", 
  "roles": [
   {
-   "role": "System Manager"
+   "role": "R & D"
   }
  ]
 }

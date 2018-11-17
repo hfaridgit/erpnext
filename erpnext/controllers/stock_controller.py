@@ -336,6 +336,12 @@ class StockController(AccountsController):
 				return
 
 		for d in self.get('items'):
+			if d.quality_inspection:
+				qi = frappe.get_value("Quality Inspection", d.quality_inspection, "docstatus")
+				if qi == 0:
+					frappe.msgprint(_("Quality Inspection Not Finished Yet for Item {0}").format(d.item_code))
+					if self.docstatus==1:
+						raise frappe.ValidationError
 			if (frappe.db.get_value("Item", d.item_code, inspection_required_fieldname)
 				and not d.quality_inspection):
 

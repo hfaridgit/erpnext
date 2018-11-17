@@ -72,6 +72,18 @@ def get_data():
 					"name": "Asset Maintenance",
 					"doctype": "Asset Maintenance"
 				},
+				{
+					"type": "report",
+					"name": "Asset Status Report",
+					"doctype": "Asset",
+					"is_query_report": True,
+				},
+				{
+					"type": "report",
+					"name": "Asset Status Report For All Assets",
+					"doctype": "Asset",
+					"is_query_report": True,
+				},
 			]
 		}
 	]

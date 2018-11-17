@@ -887,6 +887,27 @@ class StockEntry(StockController):
 		'''Checks if quality inspection is set for Items that require inspection.
 		On submit, throw an exception'''
 		
+		for d in self.get('items'):
+			if d.t_warehouse:
+				w = frappe.get_value("Warehouse", d.t_warehouse, "neglect_inspection")
+				if w!=1:
+					if d.s_warehouse:
+						wt = frappe.get_value("Warehouse", d.s_warehouse, "inspection_required")
+						if d.quality_inspection:
+							qi = frappe.get_value("Quality Inspection", d.quality_inspection, "docstatus")
+							if qi == 0:
+								frappe.msgprint(_("Quality Inspection Not Finished Yet for Item {0}").format(d.item_code))
+								if self.docstatus==1:
+									raise frappe.ValidationError
+						if wt==1 and not d.quality_inspection:
+							frappe.msgprint(_("Quality Inspection required for Item {0}").format(d.item_code))
+							if self.docstatus==1:
+								raise frappe.ValidationError
+
+	def validate_inspection_old(self):
+		'''Checks if quality inspection is set for Items that require inspection.
+		On submit, throw an exception'''
+		
 		if self.purpose == "Manufacture":
 			inspection_required_fieldname = "inspection_required_after_manufacturing"
 

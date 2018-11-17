@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 2, 
  "is_standard": "Yes", 
- "modified": "2018-05-24 12:17:12.919582", 
+ "modified": "2018-10-24 13:45:31.668685", 
  "modified_by": "Administrator", 
  "module": "Selling", 
  "name": "Customer Credit Balance", 
@@ -17,25 +17,19 @@
  "report_type": "Script Report", 
  "roles": [
   {
-   "role": "Sales User"
+   "role": "Mifad - Sales User"
   }, 
   {
-   "role": "Sales Manager"
+   "role": "Mifad - Sales Manager"
   }, 
   {
-   "role": "Sales Master Manager"
+   "role": "Mifad - Sales Manager"
   }, 
   {
-   "role": "Stock User"
+   "role": "Mifad - Accounts User"
   }, 
   {
-   "role": "Stock Manager"
-  }, 
-  {
-   "role": "Accounts User"
-  }, 
-  {
-   "role": "Accounts Manager"
+   "role": "Mifad - Accounts Manager"
   }
  ]
 }

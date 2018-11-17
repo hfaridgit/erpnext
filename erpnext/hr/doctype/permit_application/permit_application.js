@@ -38,6 +38,7 @@ frappe.ui.form.on("Permit Application", {
 
 	employee: function(frm) {
 		frm.trigger("get_permit_balance");
+		frm.trigger("get_default_approver");
 	},
 
 	get_permit_balance: function(frm) {
@@ -51,6 +52,21 @@ frappe.ui.form.on("Permit Application", {
 				callback: function(r) {
 					if (!r.exc && r.message) {
 						frm.set_value('permit_balance', r.message);
+					}
+				}
+			});
+		}
+	},
+	get_default_approver: function(frm) {
+		if(frm.doc.docstatus==0 && frm.doc.employee) {
+			return frappe.call({
+				method: "erpnext.hr.doctype.leave_application.leave_application.get_default_approver",
+				args: {
+					employee: frm.doc.employee
+				},
+				callback: function(r) {
+					if (!r.exc && r.message) {
+						frm.set_value('leave_approver', r.message);
 					}
 				}
 			});

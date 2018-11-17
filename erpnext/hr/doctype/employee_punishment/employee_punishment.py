@@ -21,11 +21,11 @@ class EmployeePunishment(Document):
 
 		self.validate_count_before()
 		
-	def on_submit(self):
+	#def on_submit(self):
 
 		# notify leave applier about approval
-		self.notify_employee()
-		self.notify_manager()
+		#self.notify_employee()
+		#self.notify_manager()
 
 	#def on_cancel(self):
 		# notify leave applier about cancellation

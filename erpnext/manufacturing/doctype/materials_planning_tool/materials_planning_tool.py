@@ -120,6 +120,7 @@ class MaterialsPlanningTool(Document):
 	def create_material_request(self):
 		material_request_list = []
 		if self.items:
+			production_orders = ', '.join([d.production_order for d in self.get('production_orders') if d.production_order])
 			material_request = frappe.new_doc("Material Request")
 			material_request.update({
 				"naming_series": "_MRP-", 
@@ -127,6 +128,7 @@ class MaterialsPlanningTool(Document):
 				"status": "Draft",
 				"company": self.company,
 				"business_unit": self.business_unit,
+				"production_order_numbers": production_orders or None, 
 				"requested_by": frappe.session.user,
 				"schedule_date": self.requested_by_date,
 				"material_request_type": "Material Transfer",
@@ -164,6 +166,84 @@ class MaterialsPlanningTool(Document):
 				msgprint(_("Material Requests {0} created").format(comma_and(message)))
 		else:
 			msgprint(_("Nothing to request"))
+
+############################# for material view html #############################
+	def get_po_wise_planned_qty(self):
+		bom_dict = {}
+		for d in self.get("production_orders"):
+			bom_dict.setdefault(d.bom_no, []).append([d.production_item, flt(d.pending_qty)])
+		return bom_dict
+
+	def download_raw_materials(self):
+		""" Create csv data for required raw material to produce finished goods"""
+		self.validate_data()
+		bom_dict = self.get_po_wise_planned_qty()
+		self.get_raw_materials(bom_dict)
+		return self.get_csv()
+
+	def get_raw_materials(self, bom_dict,non_stock_item=0):
+		""" Get raw materials considering sub-assembly items
+			{
+				"item_code": [qty_required, description, stock_uom, min_order_qty]
+			}
+		"""
+		item_list = []
+		precision = frappe.get_precision("BOM Item", "stock_qty")
+
+		for bom, po_wise_qty in bom_dict.items():
+			bom_wise_item_details = {}
+			# get all raw materials with sub assembly childs
+			# Did not use qty_consumed_per_unit in the query, as it leads to rounding loss
+			for d in frappe.db.sql("""select fb.item_code,
+				ifnull(sum(fb.stock_qty/ifnull(bom.quantity, 1)), 0) as qty,
+				fb.description, fb.stock_uom, item.min_order_qty
+				from `tabBOM Explosion Item` fb, `tabBOM` bom, `tabItem` item
+				where bom.name = fb.parent and item.name = fb.item_code
+				and (item.is_sub_contracted_item = 0 or ifnull(item.default_bom, "")="")
+				""" + ("and item.is_stock_item = 1","")[non_stock_item] + """
+				and fb.docstatus<2 and bom.name=%(bom)s
+				group by fb.item_code, fb.stock_uom""", {"bom":bom}, as_dict=1):
+					bom_wise_item_details.setdefault(d.item_code, d)
+
+			for item, item_details in bom_wise_item_details.items():
+				for po_qty in po_wise_qty:
+					item_list.append([item, flt(flt(item_details.qty) * po_qty[1], precision),
+						item_details.description, item_details.stock_uom, item_details.min_order_qty,
+						po_qty[0]])
+
+		self.make_items_dict(item_list)
+
+	def make_items_dict(self, item_list):
+		if not getattr(self, "item_dict", None):
+			self.item_dict = {}
+
+		for i in item_list:
+			self.item_dict.setdefault(i[0], []).append([flt(i[1]), i[2], i[3], i[4], i[5]])
+
+	def get_csv(self):
+		item_list = [['Item Code', 'Description', 'Stock UOM', 'Required Qty', 'Warehouse',
+		 	'Quantity Requested for Purchase', 'Ordered Qty', 'Actual Qty']]
+		for item in self.item_dict:
+			total_qty = sum([flt(d[0]) for d in self.item_dict[item]])
+			item_list.append([item, self.item_dict[item][0][1], self.item_dict[item][0][2], total_qty])
+			item_qty = frappe.db.sql("""select warehouse, indented_qty, ordered_qty, actual_qty
+				from `tabBin` where item_code = %s""", item, as_dict=1)
+
+			i_qty, o_qty, a_qty = 0, 0, 0
+			for w in item_qty:
+				i_qty, o_qty, a_qty = i_qty + flt(w.indented_qty), o_qty + \
+					flt(w.ordered_qty), a_qty + flt(w.actual_qty)
+
+				item_list.append(['', '', '', '', w.warehouse, flt(w.indented_qty),
+					flt(w.ordered_qty), flt(w.actual_qty)])
+			if item_qty:
+				item_list.append(['', '', '', '', 'Total', i_qty, o_qty, a_qty])
+			else:
+				item_list.append(['', '', '', '', 'Total', 0, 0, 0])
+
+		return item_list
+
+##################################################################################
 
 @frappe.whitelist()
 def get_item_details(item):

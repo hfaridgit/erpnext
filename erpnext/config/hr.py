@@ -32,6 +32,12 @@ def get_data():
 					"doctype": "Employee Transactions"
 				},
 				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Employee Ubnormal Transactions",
+					"doctype": "Employee Transactions"
+				},
+				{
 					"type": "doctype",
 					"name": "Attendance",
 					"description": _("Attendance record."),
@@ -193,6 +199,12 @@ def get_data():
 					"name": "Salary Slip Type",
 					"label": _("Salary Slip Type"),
 					"description": _("Normal Salary Slip or Bonus or Other Payment Slip")
+				},
+				{
+					"type": "doctype",
+					"name": "Salary Slip Type Tool",
+					"label": _("Salary Slip Type Tool"),
+					"description": _("Set Employees for Salary Slip or Bonus or Other Payment Slip")
 				},
 
 			]
@@ -365,6 +377,56 @@ def get_data():
 			]
 		},
 		{
+			"label": _("Punishments"),
+			"icon": "fa fa-file-powerpoint-o",
+			"items": [
+				{
+					"type": "doctype",
+					"label": _("Administrative Punishment Names"),
+					"name": "Punishment Admin Action",
+					"description": ""
+				},
+				{
+					"type": "doctype",
+					"label": _("Punishment Rules Setup"),
+					"name": "Punishment Rule",
+					"description": ""
+				},
+				{
+					"type": "doctype",
+					"label": _("Employee Punishment"),
+					"name": "Employee Punishment",
+					"description": ""
+				},
+			]
+		},
+		{
+			"label": _("Help"),
+			"icon": "fa fa-facetime-video",
+			"items": [
+				{
+					"type": "help",
+					"label": _("Setting up Employees"),
+					"youtube_id": "USfIUdZlUhw"
+				},
+				{
+					"type": "help",
+					"label": _("Leave Management"),
+					"youtube_id": "fc0p_AXebc8"
+				},
+				{
+					"type": "help",
+					"label": _("Expense Claims"),
+					"youtube_id": "5SZHJF--ZFY"
+				},
+				{
+					"type": "help",
+					"label": _("Processing Payroll"),
+					"youtube_id": "apgE-f25Rm0"
+				},
+			]
+		},
+		{
 			"label": _("Reports"),
 			"icon": "fa fa-list",
 			"items": [
@@ -466,6 +528,12 @@ def get_data():
 				{
 					"type": "report",
 					"is_query_report": True,
+					"name": "Salary Sheet2",
+					"doctype": "Salary Slip"
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
 					"name": "Payroll Sheet",
 					"doctype": "Salary Slip"
 				},
@@ -475,57 +543,30 @@ def get_data():
 					"name": "Social Insurance Sheet",
 					"doctype": "Salary Slip"
 				},
-
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Car Allowance Report",
+					"doctype": "Salary Slip"
+				}, 
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Bank Sheet",
+					"doctype": "Salary Slip"
+				}, 
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Salary Slips",
+					"doctype": "Salary Slip"
+				}, 
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Employee Salary Slip",
+					"doctype": "Salary Slip"
+				}
 			]
 		},
-		{
-			"label": _("Help"),
-			"icon": "fa fa-facetime-video",
-			"items": [
-				{
-					"type": "help",
-					"label": _("Setting up Employees"),
-					"youtube_id": "USfIUdZlUhw"
-				},
-				{
-					"type": "help",
-					"label": _("Leave Management"),
-					"youtube_id": "fc0p_AXebc8"
-				},
-				{
-					"type": "help",
-					"label": _("Expense Claims"),
-					"youtube_id": "5SZHJF--ZFY"
-				},
-				{
-					"type": "help",
-					"label": _("Processing Payroll"),
-					"youtube_id": "apgE-f25Rm0"
-				},
-			]
-		},
-		{
-			"label": _("Punishments"),
-			"icon": "fa fa-file-powerpoint-o",
-			"items": [
-				{
-					"type": "doctype",
-					"label": _("Administrative Punishment Names"),
-					"name": "Punishment Admin Action",
-					"description": ""
-				},
-				{
-					"type": "doctype",
-					"label": _("Punishment Rules Setup"),
-					"name": "Punishment Rule",
-					"description": ""
-				},
-				{
-					"type": "doctype",
-					"label": _("Employee Punishment"),
-					"name": "Employee Punishment",
-					"description": ""
-				},
-			]
-		}
 	]

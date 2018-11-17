@@ -310,8 +310,9 @@ frappe.query_reports["Employee Transactions Review"] = {
 			frappe.set_route("Form", "Leave Application", values.mission_application);
 		} else {
 			if(values.docstatus>0) { frappe.msgprint(__("Transaction Already Submitted.")); return; }
-			frappe.prompt([{fieldname: "to_date", fieldtype: "Date",  label: "To Date", "default": values.posting_date, reqd: 1}, 
-				{fieldname:"half_day", fieldtype:"Check",  label: "Half Day", "default": 0,  reqd: 0}], 
+			frappe.prompt([{fieldname: "from_time", fieldtype: "Time",  label: "From Time", reqd: 1}, 
+				{fieldname: "to_time", fieldtype: "Time",  label: "To Time", reqd: 1}, 
+				{fieldname:"direction", fieldtype:"Data",  label: "Direction", reqd: 0}], 
 				function(data) { 
 						frappe.call({
 							method: "erpnext.hr.doctype.employee_transactions_tool.employee_transactions_tool.change_leave",
@@ -322,8 +323,10 @@ frappe.query_reports["Employee Transactions Review"] = {
 								business_unit: values.business_unit,
 								employee: values.employee,
 								from_date: values.posting_date,
-								to_date: data.to_date,
-								half_day: data.half_day
+								to_date: values.posting_date,
+								from_time: data.from_time,
+								to_time: data.to_time,
+								direction: data.direction
 							},
 							callback: (r) => {
 								frappe.query_report.refresh();
@@ -346,7 +349,8 @@ frappe.query_reports["Employee Transactions Review"] = {
 							}
 				},
 				{fieldname: "to_date", fieldtype: "Date",  label: "To Date", "default": vals.posting_date, reqd: 1}, 
-				{fieldname:"half_day", fieldtype:"Check",  label: "Half Day", "default": 0,  reqd: 0}], 
+				{fieldname:"half_day", fieldtype:"Check",  label: "Half Day", "default": 0,  reqd: 0},
+				{fieldname:"evening", fieldtype:"Check",  label: "Evening", "default": 0,  reqd: 0}], 
 				function(data) { 
 						frappe.call({
 							method: "erpnext.hr.doctype.employee_transactions_tool.employee_transactions_tool.change_leave",
@@ -358,7 +362,8 @@ frappe.query_reports["Employee Transactions Review"] = {
 								employee: vals.employee,
 								from_date: vals.posting_date,
 								to_date: data.to_date,
-								half_day: data.half_day
+								half_day: data.half_day, 
+								evening: data.evening
 							},
 							callback: (r) => {
 								frappe.query_report.refresh();
@@ -394,7 +399,8 @@ frappe.query_reports["Employee Transactions Review"] = {
 	}, 
 	"change_shift":  function(values) {
 		if(values.docstatus>0) { frappe.msgprint(__("Transaction Already Submitted.")); return; }
-		frappe.prompt({fieldname: "shift", fieldtype: "Link", options: "Shifts",  label: "Shift", reqd: 1}, 
+		frappe.prompt([{fieldname: "shift", fieldtype: "Link", options: "Shifts",  label: "Shift", reqd: 1},
+						{fieldname: "one_day", fieldtype: "Check", label: __("Apply for this Day only"), reqd: 0}], 
 			function(data) { 
 					frappe.call({
 						method: "erpnext.hr.doctype.employee_transactions_tool.employee_transactions_tool.change_shift",
@@ -403,6 +409,8 @@ frappe.query_reports["Employee Transactions Review"] = {
 							business_unit: values.business_unit,
 							employee: values.employee,
 							shift: data.shift,
+							old_shift: values.shift,
+							one_day: data.one_day, 
 							posting_date: values.posting_date
 						},
 						callback: (r) => {

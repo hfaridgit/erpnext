@@ -59,6 +59,7 @@ frappe.ui.form.on("Leave Application", {
 
 	employee: function(frm) {
 		frm.trigger("get_leave_balance");
+		frm.trigger("get_default_approver");
 	},
 
 	leave_type: function(frm) {
@@ -76,11 +77,11 @@ frappe.ui.form.on("Leave Application", {
 	},
 
 	from_date: function(frm) {
-		if(!frappe.user.has_role(['Administrator', 'System Manager', 'HR Manager', 'Leave Manager'])) {
-			frm.doc.from_date = frappe.datetime.get_today();
-			frappe.msgprint(__("Date cannot be in past."));
-			refresh_field("from_date");
-		}
+		//if(!frappe.user.has_role(['Administrator', 'System Manager', 'HR Manager', 'Leave Approver', 'Leave Manager'])) {
+		//	frm.doc.from_date = frappe.datetime.get_today();
+		//	//frappe.msgprint(__("Date cannot be in past."));
+		//	refresh_field("from_date");
+		//}
 
 		frm.trigger("half_day_datepicker");
 		frm.trigger("calculate_total_days");
@@ -117,6 +118,21 @@ frappe.ui.form.on("Leave Application", {
 				callback: function(r) {
 					if (!r.exc && r.message) {
 						frm.set_value('leave_balance', r.message);
+					}
+				}
+			});
+		}
+	},
+	get_default_approver: function(frm) {
+		if(frm.doc.docstatus==0 && frm.doc.employee) {
+			return frappe.call({
+				method: "erpnext.hr.doctype.leave_application.leave_application.get_default_approver",
+				args: {
+					employee: frm.doc.employee
+				},
+				callback: function(r) {
+					if (!r.exc && r.message) {
+						frm.set_value('leave_approver', r.message);
 					}
 				}
 			});

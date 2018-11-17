@@ -77,8 +77,10 @@ def make_depreciation_entry(asset_name, date=None):
 
 			d.db_set("journal_entry", je.name)
 			asset.value_after_depreciation -= d.depreciation_amount
+			asset.last_depreciation_date = d.schedule_date
 
 	asset.db_set("value_after_depreciation", asset.value_after_depreciation)
+	asset.db_set("last_depreciation_date", asset.last_depreciation_date)
 	asset.set_status()
 
 	return asset
@@ -115,11 +117,6 @@ def get_depreciation_accounts(asset):
 def scrap_asset(asset_name):
 	asset = frappe.get_doc("Asset", asset_name)
 
-	if asset.docstatus != 1:
-		frappe.throw(_("Asset {0} must be submitted").format(asset.name))
-	elif asset.status in ("Cancelled", "Sold", "Scrapped"):
-		frappe.throw(_("Asset {0} cannot be scrapped, as it is already {1}").format(asset.name, asset.status))
-
 	depreciation_series = frappe.db.get_value("Company", asset.company, "series_for_depreciation_entry")
 
 	je = frappe.new_doc("Journal Entry")
@@ -129,41 +126,61 @@ def scrap_asset(asset_name):
 	je.company = asset.company
 	je.business_unit = asset.business_unit
 	je.remark = "Scrap Entry for asset {0}".format(asset_name)
-
-	for entry in get_gl_entries_on_asset_disposal(asset):
-		entry.update({
-			"business_unit": asset.business_unit,
-			"reference_type": "Asset",
-			"reference_name": asset_name
-		})
-		je.append("accounts", entry)
+	assets = frappe.db.sql("""select name, item_code, cost_center, asset_name, docstatus, status from `tabAsset` 
+							where docstatus=1 and name=%(asset)s or parent_asset=%(asset)s 
+							and not status in ('Cancelled', 'Sold', 'Scrapped') order by parent_asset""", 
+							{'asset': asset_name}, as_dict=1)
+	for ass in assets:							
+		if ass.docstatus != 1:
+			frappe.throw(_("Asset {0} must be submitted").format(ass.name))
+		elif ass.status in ("Cancelled", "Sold", "Scrapped"):
+			frappe.throw(_("Asset {0} cannot be scrapped, as it is already {1}").format(ass.name, ass.status))
+		asset2 = frappe.get_doc("Asset", ass.name)
+		for entry in get_gl_entries_on_asset_disposal(asset2):
+			entry.update({
+				"business_unit": asset.business_unit,
+				"reference_type": "Asset",
+				"reference_name": ass.name
+			})
+			je.append("accounts", entry)
 
 	je.flags.ignore_permissions = True
 	je.submit()
 	
-	frappe.db.set_value("Asset", asset_name, "disposal_date", today())
-	frappe.db.set_value("Asset", asset_name, "journal_entry_for_scrap", je.name)
-	asset.set_status("Scrapped")
+	for ass in assets:		
+		asset = frappe.get_doc("Asset", ass.name)
+		frappe.db.set_value("Asset", ass.name, "disposal_date", today())
+		frappe.db.set_value("Asset", ass.name, "journal_entry_for_scrap", je.name)
+		asset.set_status("Scrapped")
 	
 	frappe.msgprint(_("Asset scrapped via Journal Entry {0}").format(je.name))
 
 @frappe.whitelist()
 def restore_asset(asset_name):
-	asset = frappe.get_doc("Asset", asset_name)
-
-	je = asset.journal_entry_for_scrap
-	
-	asset.db_set("disposal_date", None)
-	asset.db_set("journal_entry_for_scrap", None)
-	
+	assets = frappe.db.sql("""select name, item_code, cost_center, asset_name, docstatus, status from `tabAsset` 
+							where docstatus=1 and name=%(asset)s or parent_asset=%(asset)s 
+							and status='Scrapped' order by parent_asset""", 
+							{'asset': asset_name}, as_dict=1)
+	main_asset = frappe.get_doc("Asset", asset_name)
+	je = main_asset.journal_entry_for_scrap
+	for ass in assets:							
+		asset = frappe.get_doc("Asset", ass.name)
+		asset.db_set("disposal_date", None)
+		asset.db_set("journal_entry_for_scrap", None)
+		
 	frappe.get_doc("Journal Entry", je).cancel()
-
-	asset.set_status()
+	for ass in assets:							
+		asset = frappe.get_doc("Asset", ass.name)
+		asset.set_status()
 
 @frappe.whitelist()
 def get_gl_entries_on_asset_disposal(asset, selling_amount=0):
+	if not asset.cost_center:
+		disposal_account, depreciation_cost_center = get_disposal_account_and_cost_center(asset.company)
+	else:
+		depreciation_cost_center = asset.cost_center
+		disposal_account = frappe.db.get_value("Company", asset.company, "disposal_account")
 	fixed_asset_account, accumulated_depr_account, depr_expense_account = get_depreciation_accounts(asset)
-	disposal_account, depreciation_cost_center = get_disposal_account_and_cost_center(asset.company)
 
 	accumulated_depr_amount = flt(asset.gross_purchase_amount) - flt(asset.value_after_depreciation)
 

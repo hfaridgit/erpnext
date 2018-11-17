@@ -59,6 +59,21 @@ def get_data():
 					"description": _("All Addresses."),
 				},
 
+				# @custom
+				{
+					"type": "doctype",
+					"name": "Vendor Samples",
+					"doctype": "Vendor Samples",
+					"description": _("Vendor Samples"),
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Item Approved Suppliers",
+					"doctype": "Item",
+					"description": _("Change Approved items for Suppliers"),
+				},
 			]
 		},
 		{

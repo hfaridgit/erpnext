@@ -56,6 +56,8 @@ class PurchaseOrder(BuyingController):
 		self.validate_supplier()
 		self.validate_schedule_date()
 		validate_for_items(self)
+		from erpnext.buying.utils import validate_approved_items
+		validate_approved_items(self, self.supplier)
 		self.check_for_closed_status()
 
 		self.validate_uom_is_integer("uom", "qty")

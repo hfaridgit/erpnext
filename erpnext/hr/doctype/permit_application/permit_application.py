@@ -32,12 +32,25 @@ class PermitApplication(Document):
 
 		set_employee_name(self)
 
+		if frappe.db.exists("Employee Transactions",self.employee + '/' + self.permit_date) and not self.transaction:
+			frappe.throw(_("Not permitted. Transaction Month is opened."))
+			
+		self.validate_workflow()
+
 		self.validate_balance_permits()
 		self.validate_permit_overlap()
 		self.validate_max_units()
 		self.validate_leave_approver()
 		#self.validate_attendance()
 		
+	def validate_workflow(self):
+		if self.docstatus==0 and frappe.db.get_value("HR Settings", "apply_permit_workflow") == 1:
+			user_id = frappe.db.get_value("Employee", self.employee, "user_id")
+			if user_id == frappe.session.user:
+				self.workflow_state = "Created"
+			if user_id != frappe.session.user and ("Leave Manager" in frappe.get_roles(frappe.session.user)):
+				self.workflow_state = "Created By Hr User" 
+
 	def on_update(self):
 		if (not self.previous_doc and self.leave_approver) or (self.previous_doc and \
 				self.status == "Open" and self.previous_doc.leave_approver != self.leave_approver):
@@ -101,10 +114,11 @@ class PermitApplication(Document):
 				name, posting_date, permit_date, total_units
 			from `tabPermit Application`
 			where employee = %(employee)s and docstatus < 2 and status in ("Open", "Approved")
-			and permit_date = %(permit_date)s
+			and permit_date = %(permit_date)s and is_early_leave=%(el)s 
 			and name != %(name)s""", {
 				"employee": self.employee,
 				"permit_date": self.permit_date,
+				"el": self.is_early_leave, 
 				"name": self.name
 			}, as_dict = 1):
 
@@ -135,7 +149,7 @@ class PermitApplication(Document):
 			frappe.throw(_("{0} ({1}) must have role 'Leave Approver'")\
 				.format(get_fullname(self.leave_approver), self.leave_approver), InvalidLeaveApproverError)
 
-		elif self.docstatus==1 and len(leave_approvers) and self.leave_approver != frappe.session.user:
+		elif self.docstatus==1 and len(leave_approvers) and self.leave_approver != frappe.session.user and ("Leave Manager" not in frappe.get_roles(frappe.session.user)):
 			frappe.throw(_("Only the selected Permit Approver can submit this Permit Application"),
 				LeaveApproverIdentityError)
 

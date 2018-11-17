@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 3, 
  "is_standard": "Yes", 
- "modified": "2017-02-24 20:14:35.208989", 
+ "modified": "2018-10-24 13:32:44.598291", 
  "modified_by": "Administrator", 
  "module": "Accounts", 
  "name": "Sales Register", 
@@ -17,10 +17,16 @@
  "report_type": "Script Report", 
  "roles": [
   {
-   "role": "Accounts Manager"
+   "role": "Mifad - Accounts Manager"
   }, 
   {
-   "role": "Accounts User"
+   "role": "Mifad - Accounts User"
+  }, 
+  {
+   "role": "Mifad - Sales User"
+  }, 
+  {
+   "role": "Mifad - Sales Manager"
   }
  ]
 }

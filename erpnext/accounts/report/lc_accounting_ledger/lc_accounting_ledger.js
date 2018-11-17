@@ -12,10 +12,36 @@ frappe.query_reports["LC Accounting Ledger"] = {
 			"reqd": 1
 		},
 		{
-			"fieldname":"lc_no",
-			"label": __("LC Number"),
+			"fieldname":"business_unit",
+			"label": __("business_unit"),
 			"fieldtype": "Link",
-			"options": "Letter of Credit",
+			"options": "Business Unit",
+			"get_query": function() {
+				var company = frappe.query_report_filters_by_name.company.get_value();
+				return {
+					"doctype": "Business Unit",
+					"filters": {
+						"company": company,
+					}
+				}
+			},
+			"reqd": 1
+		},
+		{
+			"fieldname":"project",
+			"label": __("Letter Of Credit"),
+			"fieldtype": "Link",
+			"options": "Project",
+			"get_query": function() {
+				var company = frappe.query_report_filters_by_name.company.get_value();
+				return {
+					"doctype": "Project",
+					"filters": {
+						"company": company,
+						"project_type": "Import Operation"
+					}
+				}
+			},
 			"reqd": 1
 		},
 	]

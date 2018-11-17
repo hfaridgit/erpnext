@@ -55,7 +55,7 @@ class CarOdometerPost(Document):
 										where md.docstatus<>2 and md.holiday=0 and md.is_submitted=0 
 										and ma.company=%(company)s and ma.business_unit=%(business_unit)s 
 										and md.date>%(start_date)s and md.date<=%(end_date)s
-										group by employee""", {'company': self.company, 'business_unit': self.business_unit, 
+										group by employee having total_counter<>0""", {'company': self.company, 'business_unit': self.business_unit, 
 										'start_date': start_dt[0].start_date, 'end_date': self.posting_date}, as_dict=1)
 										
 		missions = frappe.db.sql("""select ma.employee, ma.employee_name, ma.company, ma.business_unit, md.date
@@ -96,6 +96,7 @@ class CarOdometerPost(Document):
 				lv.employee = m.employee
 				lv.company = m.company
 				lv.business_unit = m.business_unit
+				lv.follow_via_email = 0
 				lv.insert()
 				lv.submit()
 		

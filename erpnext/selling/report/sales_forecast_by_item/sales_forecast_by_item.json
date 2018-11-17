@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2018-07-22 15:41:40.866036", 
+ "modified": "2018-10-25 12:45:38.618965", 
  "modified_by": "Administrator", 
  "module": "Selling", 
  "name": "Sales Forecast By Item", 
@@ -21,7 +21,13 @@
    "role": "Sales Person"
   }, 
   {
-   "role": "Sales User"
+   "role": "Mifad - Sales User"
+  }, 
+  {
+   "role": "Mifad - Sales Person"
+  }, 
+  {
+   "role": "Mifad - Sales Manager"
   }
  ]
 }

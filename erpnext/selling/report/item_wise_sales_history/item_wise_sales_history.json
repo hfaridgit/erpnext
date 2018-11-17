@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 3, 
  "is_standard": "Yes", 
- "modified": "2017-02-24 20:08:44.614482", 
+ "modified": "2018-10-24 13:49:17.288186", 
  "modified_by": "Administrator", 
  "module": "Selling", 
  "name": "Item-wise Sales History", 
@@ -18,19 +18,13 @@
  "report_type": "Query Report", 
  "roles": [
   {
-   "role": "Sales User"
+   "role": "Mifad - Sales User"
   }, 
   {
-   "role": "Sales Manager"
+   "role": "Mifad - Sales Manager"
   }, 
   {
-   "role": "Maintenance User"
-  }, 
-  {
-   "role": "Accounts User"
-  }, 
-  {
-   "role": "Stock User"
+   "role": "Mifad - Accounts User"
   }
  ]
 }

@@ -100,6 +100,12 @@ def make_entry(args, adv_adj, update_outstanding, from_repost=False):
 	gle.insert()
 	gle.run_method("on_update_with_args", adv_adj, update_outstanding, from_repost)
 	gle.submit()
+	if gle.operation:
+		proj_acc = frappe.db.get_value("Project", gle.operation, "project_account")
+		if proj_acc:
+			from erpnext.accounts.utils import get_balance_on
+			cur_val = get_balance_on(account=proj_acc, operation=gle.operation)
+			frappe.db.set_value("Project", gle.operation, "total_actual_cost", cur_val)
 
 def validate_account_for_perpetual_inventory(gl_map):
 	if cint(erpnext.is_perpetual_inventory_enabled(gl_map[0].company)) \
@@ -198,3 +204,10 @@ def delete_gl_entries(gl_entries=None, voucher_type=None, voucher_no=None,
 		if entry.get("against_voucher") and update_outstanding == 'Yes' and not adv_adj:
 			update_outstanding_amt(entry["account"], entry.get("party_type"), entry.get("party"), entry.get("against_voucher_type"),
 				entry.get("against_voucher"), on_cancel=True)
+
+		if entry.get("project"):
+			proj_acc = frappe.db.get_value("Project", entry.get("project"), "project_account")
+			if proj_acc:
+				from erpnext.accounts.utils import get_balance_on
+				cur_val = get_balance_on(account=proj_acc, operation=entry.get("project"))
+				frappe.db.set_value("Project", entry.get("project"), "total_actual_cost", cur_val)

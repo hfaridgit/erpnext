@@ -189,7 +189,8 @@ class PaymentEntry(AccountsController):
 				self.company_currency, self.posting_date)
 
 	def validate_mandatory(self):
-		for field in ("paid_amount", "received_amount", "source_exchange_rate", "target_exchange_rate"):
+		#for field in ("paid_amount", "received_amount", "source_exchange_rate", "target_exchange_rate"):
+		for field in ("source_exchange_rate", "target_exchange_rate"):
 			if not self.get(field):
 				frappe.throw(_("{0} is mandatory").format(self.meta.get_label(field)))
 
@@ -490,6 +491,7 @@ class PaymentEntry(AccountsController):
 						"against": self.party or self.paid_from,
 						"debit_in_account_currency": d.amount,
 						"debit": d.amount,
+						"project": self.project,
 						"cost_center": d.cost_center
 					})
 				)
@@ -748,6 +750,9 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
 @frappe.whitelist()
 def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=None):
 	doc = frappe.get_doc(dt, dn)
+	project = None
+	if dt == "Purchase Invoice":
+		project = doc.project
 
 	if dt in ("Sales Order", "Purchase Order") and flt(doc.per_billed, 2) > 0:
 		frappe.throw(_("Can only make payment against unbilled {0}").format(dt))
@@ -828,6 +833,8 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 	pe = frappe.new_doc("Payment Entry")
 	pe.payment_type = payment_type
 	pe.company = doc.company
+	pe.business_unit = doc.business_unit
+	pe.project = project
 	pe.posting_date = nowdate()
 	pe.mode_of_payment = doc.get("mode_of_payment")
 	pe.party_type = party_type

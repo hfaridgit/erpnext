@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 3, 
  "is_standard": "Yes", 
- "modified": "2017-11-06 13:04:36.338268", 
+ "modified": "2018-10-24 13:37:26.489533", 
  "modified_by": "Administrator", 
  "module": "Accounts", 
  "name": "Delivered Items To Be Billed", 
@@ -18,10 +18,16 @@
  "report_type": "Script Report", 
  "roles": [
   {
-   "role": "Accounts Manager"
+   "role": "Mifad - Accounts Manager"
   }, 
   {
-   "role": "Accounts User"
+   "role": "Mifad - Accounts User"
+  }, 
+  {
+   "role": "Mifad - Sales User"
+  }, 
+  {
+   "role": "Mifad - Sales Manager"
   }
  ]
 }

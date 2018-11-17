@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2017-11-04 05:15:35.892659", 
+ "modified": "2018-10-24 13:36:32.871187", 
  "modified_by": "Administrator", 
  "module": "Accounts", 
  "name": "Sales Payment Summary", 
@@ -17,10 +17,16 @@
  "report_type": "Script Report", 
  "roles": [
   {
-   "role": "Accounts Manager"
+   "role": "Mifad - Accounts Manager"
   }, 
   {
-   "role": "Accounts User"
+   "role": "Mifad - Accounts User"
+  }, 
+  {
+   "role": "Mifad - Sales User"
+  }, 
+  {
+   "role": "Mifad - Sales Manager"
   }
  ]
 }

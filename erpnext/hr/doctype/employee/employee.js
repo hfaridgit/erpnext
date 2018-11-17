@@ -28,7 +28,7 @@ erpnext.hr.EmployeeController = frappe.ui.form.Controller.extend({
 	refresh: function() {
 		var me = this;
 		erpnext.toggle_naming_series();
-		if (!cur_frm.doc.__islocal) {
+		if (frappe.user.has_role(['Administrator', 'System Manager', 'HR Manager']) && !cur_frm.doc.__islocal) {
 			cur_frm.add_custom_button(__('Allocate Leaves'), function () {
 				return frappe.call({
 					doc: cur_frm.doc,

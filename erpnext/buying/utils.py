@@ -78,6 +78,93 @@ def check_for_closed_status(doctype, docname):
 
 	if status == "Closed":
 		frappe.throw(_("{0} {1} status is {2}").format(doctype, docname, status), frappe.InvalidStatusError)
+		
+def validate_approved_items(ref_doc, supplier):
+	b = frappe.get_doc("Buying Settings", "Buying Settings")
+	if b.is_raw_material==1 or b.is_packing_material==1 or b.is_semi_product==1 or b.is_finished_product==1 or b.is_spare_part==1:
+		if b.is_raw_material==1:
+			approved_rm = frappe.db.sql_list("""select s.parent as item_code from `tabItem Supplier` s 
+								left join `tabItem` i on i.name=s.parent 
+								where i.is_raw_material=%s and s.parenttype='Item' 
+								and s.docstatus<2 and s.supplier=%s""", (b.is_raw_material, supplier))
+
+		if b.is_packing_material==1:
+			approved_pk = frappe.db.sql_list("""select s.parent as item_code from `tabItem Supplier` s 
+								left join `tabItem` i on i.name=s.parent 
+								where i.is_packing_material=%s and s.parenttype='Item' 
+								and s.docstatus<2 and s.supplier=%s""", (b.is_packing_material, supplier))
+
+		if b.is_semi_product==1:
+			approved_sf = frappe.db.sql_list("""select s.parent as item_code from `tabItem Supplier` s 
+								left join `tabItem` i on i.name=s.parent 
+								where i.is_semi_product=%s and s.parenttype='Item' 
+								and s.docstatus<2 and s.supplier=%s""", (b.is_semi_product, supplier))
+
+		if b.is_finished_product==1:
+			approved_fp = frappe.db.sql_list("""select s.parent as item_code from `tabItem Supplier` s 
+								left join `tabItem` i on i.name=s.parent 
+								where i.is_finished_product=%s and s.parenttype='Item' 
+								and s.docstatus<2 and s.supplier=%s""", (b.is_finished_product, supplier))
+		if b.is_spare_part==1:
+			approved_sp = frappe.db.sql_list("""select s.parent as item_code from `tabItem Supplier` s 
+								left join `tabItem` i on i.name=s.parent 
+								where i.is_spare_part=%s and s.parenttype='Item' 
+								and s.docstatus<2 and s.supplier=%s""", (b.is_spare_part, supplier))
+		
+		x = 0
+		for item in ref_doc.items:
+			if b.is_raw_material==1: 
+				is_rm = frappe.get_value("Item", item.item_code, "is_raw_material")
+				if is_rm==1 and not approved_rm:
+					x = 1
+					frappe.msgprint(_("Item {0} at row {1} not in approved list for supplier {2}").format(item.item_code, item.idx, supplier))
+				if approved_rm:
+					if is_rm==1 and item.item_code not in approved_rm:
+						x = 1
+						frappe.msgprint(_("Item {0} at row {1} not in approved list for supplier {2}").format(item.item_code, item.idx, supplier))
+					
+			if b.is_packing_material==1: 
+				is_pk = frappe.get_value("Item", item.item_code, "is_packing_material")
+				if is_pk==1 and not approved_pk:
+					x = 1
+					frappe.msgprint(_("Item {0} at row {1} not in approved list for supplier {2}").format(item.item_code, item.idx, supplier))
+				if approved_pk:
+					if is_pk==1 and item.item_code not in approved_pk:
+						x = 1
+						frappe.msgprint(_("Item {0} at row {1} not in PK approved list for supplier {2}").format(item.item_code, item.idx, supplier))
+					
+			if b.is_semi_product==1: 
+				is_sf = frappe.get_value("Item", item.item_code, "is_semi_product")
+				if is_sf==1 and not approved_sf:
+					x = 1
+					frappe.msgprint(_("Item {0} at row {1} not in approved list for supplier {2}").format(item.item_code, item.idx, supplier))
+				if approved_sf:
+					if is_sf==1 and item.item_code not in approved_sf:
+						x = 1
+						frappe.msgprint(_("Item {0} at row {1} not in approved list for supplier {2}").format(item.item_code, item.idx, supplier))
+					
+			if b.is_finished_product==1:
+				is_fp = frappe.get_value("Item", item.item_code, "is_finished_product")
+				if is_fp==1 and not approved_fp:
+					x = 1
+					frappe.msgprint(_("Item {0} at row {1} not in approved list for supplier {2}").format(item.item_code, item.idx, supplier))
+				if approved_fp:
+					if is_fp==1 and item.item_code not in approved_fp:
+						x = 1
+						frappe.msgprint(_("Item {0} at row {1} not in approved list for supplier {2}").format(item.item_code, item.idx, supplier))
+					
+			if b.is_spare_part==1: 
+				is_sp = frappe.get_value("Item", item.item_code, "is_spare_part")
+				if is_sp==1 and not approved_sp:
+					x = 1
+					frappe.msgprint(_("Item {0} at row {1} not in approved list for supplier {2}").format(item.item_code, item.idx, supplier))
+				if approved_sp:
+					if is_sp==1 and item.item_code not in approved_sp:
+						x = 1
+						frappe.msgprint(_("Item {0} at row {1} not in approved list for supplier {2}").format(item.item_code, item.idx, supplier))
+				
+		if x == 1:
+			frappe.throw(_("Please Choose Approved Items Only."))
 
 @frappe.whitelist()
 def get_linked_material_requests(items):

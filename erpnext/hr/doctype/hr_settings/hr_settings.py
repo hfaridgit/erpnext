@@ -13,3 +13,6 @@ class HRSettings(Document):
 		from erpnext.setup.doctype.naming_series.naming_series import set_by_naming_series
 		set_by_naming_series("Employee", "employee_number",
 			self.get("emp_created_by")=="Naming Series", hide_name_field=True)
+			
+		frappe.set_value("Workflow", "Leave Application Workflow", "is_active", self.apply_leave_workflow)
+		frappe.set_value("Workflow", "Permit Application Workflow", "is_active", self.apply_permit_workflow)

@@ -182,7 +182,8 @@ standard_queries = {
 
 doc_events = {
 	"Stock Entry": {
-		"on_submit": "erpnext.stock.doctype.material_request.material_request.update_completed_and_requested_qty",
+		"on_submit": ["erpnext.stock.doctype.material_request.material_request.update_completed_and_requested_qty", 
+						'frappe.direction.customizations_2.on_submit_stock_entry'],
 		"on_cancel": "erpnext.stock.doctype.material_request.material_request.update_completed_and_requested_qty"
 	},
 	"User": {
@@ -209,14 +210,10 @@ doc_events = {
 	},
 	# @custom
 	'Sales Order': {
-		'validate': [
+		'on_submit': [
 			'frappe.direction.customizations_2.check_credit_limit_in_sales_order',
 			'frappe.direction.customizations_2.check_overdue_sales_invoice'
-		],
-		'before_submit': 'frappe.direction.customizations_2.before_submit_sales_order'
-	},
-	'Stock Entry': {
-		'on_submit': 'frappe.direction.customizations_2.on_submit_stock_entry'
+		]
 	}
 }
 

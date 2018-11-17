@@ -1,4 +1,16 @@
 frappe.listview_settings['Material Request'] = {
+	refresh: function(listview) {
+		if(frappe.user.has_role('Purchase Only')) {
+			if (listview.filter_list.filter_exists('Material Request', 'material_request_type', '=', 'Purchase')) {
+				return;
+			} else {
+				listview.filter_list.add_filter('Material Request', 'material_request_type', '=', 'Purchase');
+			}
+			frappe.route_options = {
+				"material_request_type": ["=", 'Purchase']
+			};
+		}
+	},
 	add_fields: ["material_request_type", "status", "per_ordered"],
 	get_indicator: function(doc) {
 		if(doc.status=="Stopped") {

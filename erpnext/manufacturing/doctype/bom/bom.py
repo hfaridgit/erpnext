@@ -78,7 +78,7 @@ class BOM(WebsiteGenerator):
 		self.manage_default_bom()
 
 	def get_item_det(self, item_code):
-		item = frappe.db.sql("""select name, item_name, docstatus, description, image,
+		item = frappe.db.sql("""select name, item_name, docstatus, description, image, is_packing_material, 
 			is_sub_contracted_item, stock_uom, default_bom, last_purchase_rate
 			from `tabItem` where name=%s""", item_code, as_dict = 1)
 
@@ -121,21 +121,38 @@ class BOM(WebsiteGenerator):
 		args.update(item[0])
 
 		rate = self.get_rm_rate(args)
-		ret_item = {
-			 'item_name'	: item and args['item_name'] or '',
-			 'description'  : item and args['description'] or '',
-			 'image'		: item and args['image'] or '',
-			 'stock_uom'	: item and args['stock_uom'] or '',
-			 'uom'			: 'Kg',
- 			 'conversion_factor': flt(get_conversion_factor(args['item_code'], 'Kg')['conversion_factor']),
-			 'bom_no'		: args['bom_no'],
-			 'rate'			: rate / self.conversion_rate if self.conversion_rate else rate,
-			 'qty'			: args.get("qty") or args.get("stock_qty") or 1,
-			 'stock_qty'	: args.get("qty") or args.get("stock_qty") or 1,
-			 'base_rate'	: rate
-		}
-		if not get_conversion_factor(args['item_code'], 'Kg')['conversion_factor']:
-			frappe.throw(_("Conversion factor not defined for UOM Kg for item {0}").format(args['item_code']))
+		if item[0]['is_packing_material'] == 1:
+			ret_item = {
+				 'item_name'	: item and args['item_name'] or '',
+				 'description'  : item and args['description'] or '',
+				 'image'		: item and args['image'] or '',
+				 'stock_uom'	: item and args['stock_uom'] or '',
+
+
+				 'uom'			: item and args['stock_uom'] or '',
+				 'conversion_factor': 1,
+				 'bom_no'		: args['bom_no'],
+				 'rate'			: rate / self.conversion_rate if self.conversion_rate else rate,
+				 'qty'			: args.get("qty") or args.get("stock_qty") or 1,
+				 'stock_qty'	: args.get("qty") or args.get("stock_qty") or 1,
+				 'base_rate'	: rate
+			}
+		else:
+			ret_item = {
+				 'item_name'	: item and args['item_name'] or '',
+				 'description'  : item and args['description'] or '',
+				 'image'		: item and args['image'] or '',
+				 'stock_uom'	: item and args['stock_uom'] or '',
+				 'uom'			: '1 KG',
+				 'conversion_factor': flt(get_conversion_factor(args['item_code'], '1 KG')['conversion_factor']),
+				 'bom_no'		: args['bom_no'],
+				 'rate'			: rate / self.conversion_rate if self.conversion_rate else rate,
+				 'qty'			: args.get("qty") or args.get("stock_qty") or 1,
+				 'stock_qty'	: args.get("qty") or args.get("stock_qty") or 1,
+				 'base_rate'	: rate
+			}
+		if not get_conversion_factor(args['item_code'], '1 KG')['conversion_factor'] and item[0]['is_packing_material'] != 1:
+			frappe.throw(_("Conversion factor not defined for UOM 1 KG for item {0}").format(args['item_code']))
 		return ret_item
 
 	def validate_bom_currecny(self, item):

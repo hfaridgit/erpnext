@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe import _
-from frappe.utils import flt, add_months, cint, nowdate, getdate, today
+from frappe.utils import flt, add_months, cint, nowdate, getdate, today, comma_and
 from frappe.model.document import Document
 from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import get_fixed_asset_account
 from erpnext.assets.doctype.asset.depreciation \
@@ -27,6 +27,7 @@ class Asset(Document):
 			self.validate_expected_value_after_useful_life()
 
 	def on_submit(self):
+		self.make_journal_entry()
 		self.set_status()
 
 	def on_cancel(self):
@@ -199,6 +200,53 @@ class Asset(Document):
 			status = "Cancelled"
 		return status
 
+	def make_journal_entry(self):
+		if self.project:
+			je_list = []
+			pj = frappe.get_doc("Project", self.project)
+			if not pj.project_account:
+				frappe.throw(_("Project Account not Defined in Project {0}").format(self.project))
+			if not pj.project_closing_account:
+				frappe.throw(_("Project Closing Account not Defined in Project {0}").format(self.project))
+			je = frappe.new_doc("Journal Entry")
+			je.voucher_type = "Journal Entry"
+			je.naming_series = "JV-"
+			je.posting_date = self.purchase_date
+			je.project = self.project 
+			je.company = self.company
+			je.business_unit = self.business_unit
+			je.remark = "Journal Entry against {0} worth {1}".format(self.name, self.gross_purchase_amount)
+
+			je.append("accounts", {
+				"account": pj.project_account,
+				"credit_in_account_currency": flt(self.gross_purchase_amount),
+				"business_unit": self.business_unit,
+				"reference_type": "Asset",
+				"reference_name": self.name, 
+				"project": self.project, 
+				"cost_center": self.cost_center
+			})
+
+			je.append("accounts", {
+				"account": pj.project_closing_account,
+				"debit_in_account_currency": flt(self.gross_purchase_amount),
+				"business_unit": self.business_unit,
+				"reference_type": "Asset",
+				"reference_name": self.name,
+				"project": self.project, 
+				"cost_center": self.cost_center
+			})
+
+			je.flags.ignore_permissions = True
+			je.submit()
+			
+			frappe.db.set_value("Project",self.project,"status","Completed")
+			je_list.append(je.name)
+			if je_list:
+				message = ["""<a href="#Form/Journal Entry/%s" target="_blank">%s</a>""" % \
+					(p, p) for p in je_list]
+				frappe.msgprint(_("Journal Entry {0} created").format(comma_and(message)))
+	
 def update_maintenance_status():
 	assets = frappe.get_all('Asset', filters = {'docstatus': 1, 'maintenance_required': 1})
 
@@ -233,15 +281,28 @@ def make_sales_invoice(asset, item_code, company):
 	si = frappe.new_doc("Sales Invoice")
 	si.company = company
 	si.currency = frappe.db.get_value("Company", company, "default_currency")
-	disposal_account, depreciation_cost_center = get_disposal_account_and_cost_center(company)
-	si.append("items", {
-		"item_code": item_code,
-		"is_fixed_asset": 1,
-		"asset": asset,
-		"income_account": disposal_account,
-		"cost_center": depreciation_cost_center,
-		"qty": 1
-	})
+
+	assets = frappe.db.sql("""select name, item_code, cost_center, asset_name from `tabAsset` 
+							where docstatus=1 and not status in ('Cancelled', 'Sold', 'Scrapped') and name=%(asset)s or parent_asset=%(asset)s order by parent_asset""", 
+							{'asset': asset}, as_dict=1)
+	for ass in assets:							
+		if not ass.cost_center:
+			disposal_account, depreciation_cost_center = get_disposal_account_and_cost_center(company)
+		else:
+			depreciation_cost_center = ass.cost_center
+			disposal_account = frappe.db.get_value("Company", company, "disposal_account")
+			if not disposal_account:
+				frappe.throw(_("Please set 'Gain/Loss Account on Asset Disposal' in Company {0}").format(company))
+		
+		si.append("items", {
+			"item_code": ass.item_code,
+			"item_name": ass.asset_name, 
+			"is_fixed_asset": 1,
+			"asset": ass.name,
+			"income_account": disposal_account,
+			"cost_center": depreciation_cost_center,
+			"qty": 1
+		})
 	si.set_missing_values()
 	return si
 

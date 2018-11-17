@@ -70,13 +70,22 @@ class EmployeeTransactionsTool(Document):
 		frappe.msgprint(_("Transactions Deleted Successfuly."))
 		
 		
-	def submit_month_transactions(self):
+	def apply_rules(self):
 		cond = self.get_employees()
 		#start_day, end_day = self.get_transactions_period()
+		self.prepare_from_to_time()
 		self.update_overtime()
+		self.delete_punishments()
 		self.apply_punishments()
+			
+		frappe.db.commit()
+		
+		frappe.msgprint(_("Rules Applied Successfuly."))
+		
+	def submit_month_transactions(self):
+		cond = self.get_employees()
 		smt_trans = frappe.db.sql("""update `tabEmployee Transactions` set docstatus=1 
-			where transaction_year=%(trans_year)s and transaction_month=%(trans_month)s and payroll_processed=0 
+			where docstatus=0 and transaction_year=%(trans_year)s and transaction_month=%(trans_month)s and payroll_processed=0 
 			and employee in (select name from `tabEmployee` where status='Active' {condition})""".format(condition=cond), 
 			{'trans_year': self.transaction_year, 'trans_month': self.transaction_month})
 
@@ -86,15 +95,24 @@ class EmployeeTransactionsTool(Document):
 		
 		frappe.msgprint(_("Transactions Submitted Successfuly."))
 		
-	def reopen_month_transactions(self):
+	def delete_punishments(self):
 		cond = self.get_employees()
 		#self.delete_punishments()
+		frappe.db.sql("""update `tabEmployee Transactions` set punishment=null, punishment_name=null 
+			where punishment in (select name from `tabEmployee Punishment` 
+			where transaction_year=%(trans_year)s and transaction_month=%(trans_month)s and is_auto_generated=1 
+			and employee in (select name from `tabEmployee` where status='Active' {condition}))""".format(condition=cond), 
+			{'trans_year': self.transaction_year, 'trans_month': self.transaction_month})
 		frappe.db.sql("""Delete from `tabEmployee Punishment` 
 			where transaction_year=%(trans_year)s and transaction_month=%(trans_month)s and is_auto_generated=1 
 			and employee in (select name from `tabEmployee` where status='Active' {condition})""".format(condition=cond), 
 			{'trans_year': self.transaction_year, 'trans_month': self.transaction_month})
+
+	def reopen_month_transactions(self):
+		self.delete_punishments()
+		cond = self.get_employees()
 		smt_trans = frappe.db.sql("""update `tabEmployee Transactions` set docstatus=0 
-			where transaction_year=%(trans_year)s and transaction_month=%(trans_month)s and payroll_processed=0 
+			where docstatus=1 and transaction_year=%(trans_year)s and transaction_month=%(trans_month)s and payroll_processed=0 
 			and employee in (select name from `tabEmployee` where status='Active' {condition})""".format(condition=cond), 
 			{'trans_year': self.transaction_year, 'trans_month': self.transaction_month})
 
@@ -164,6 +182,36 @@ class EmployeeTransactionsTool(Document):
 		self.update_transactions(self.last_generate_date)
 		frappe.msgprint(_("Transactions Updated Successfuly."))
 		
+	def prepare_from_to_time(self):
+		cond = self.get_employees()
+		frappe.db.sql("""update `tabEmployee Transactions` et left join `tabShifts` s on s.name=et.shift 
+								set et.from_time=ifnull(s.late_time,s.start_time), et.to_time=s.end_time
+								where et.docstatus=0 and et.transaction_year=%(trans_year)s and et.transaction_month=%(trans_month)s
+								and et.employee in (select name from `tabEmployee` where status='Active' {condition})""".format(condition=cond), 
+								{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
+		
+		frappe.db.sql("""update `tabEmployee Transactions` et left join `tabShifts` s on s.name=et.shift 
+								set et.from_time=if(et.evening=1,s.mid_time,ifnull(s.late_time,s.start_time)), et.to_time=if(et.evening=1,s.end_time,s.mid_time)
+								where et.docstatus=0 and et.half_day=1 and et.transaction_year=%(trans_year)s and et.transaction_month=%(trans_month)s
+								and et.employee in (select name from `tabEmployee` where status='Active' {condition})""".format(condition=cond), 
+								{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
+		
+		frappe.db.sql("""update `tabEmployee Transactions` et 
+								set et.from_time=time(AddTime(et.bus_time_in,'00:10:00'))
+								where et.docstatus=0 and et.bus_delay=1 and (not isnull(et.bus_time_in)) and time(bus_time_in)>et.from_time 
+								and et.transaction_year=%(trans_year)s and et.transaction_month=%(trans_month)s
+								and et.employee in (select name from `tabEmployee` where status='Active' {condition})""".format(condition=cond), 
+								{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
+
+		frappe.db.sql("""update `tabEmployee Transactions` et set 
+								et.overtime_minutes=if(et.to_time<et.time_out, ifnull(TIMESTAMPDIFF(MINUTE, et.to_time, et.time_out),0),0), 
+								et.lateness_minutes=if(et.from_time<et.time_in, ifnull(TIMESTAMPDIFF(MINUTE, et.from_time, et.time_in),0),0), 
+								et.early_exit_minutes=if(et.time_out<et.to_time, ifnull(TIMESTAMPDIFF(MINUTE, et.time_out, et.to_time),0),0)
+								where et.docstatus=0 and not isnull(et.from_time) and not isnull(et.to_time)
+								and et.transaction_year=%(trans_year)s and et.transaction_month=%(trans_month)s
+								and et.employee in (select name from `tabEmployee` where status='Active' {condition})""".format(condition=cond), 
+								{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1) 
+								
 	def apply_punishments(self):
 		cond = self.get_employees()
 		start_lateness_minute = 0
@@ -171,174 +219,120 @@ class EmployeeTransactionsTool(Document):
 		if minimum_from:
 			start_lateness_minute = minimum_from[0][0]
 		trans = frappe.db.sql("""select et.name, et.employee, et.shift, et.posting_date, et.lateness_minutes, et.early_exit_minutes, et.bus_delay, 
-							if(time(et.shift_late_time)<et.time_in, TIMESTAMPDIFF(MINUTE, time(et.shift_late_time), et.time_in),0) as lateness, 
-							ifnull(p.total_units,0)*60 as permit_minutes, ifnull(p.is_early_leave,0) as is_early_leave 
+							if(time(et.from_time)<et.time_in, TIMESTAMPDIFF(MINUTE, time(et.from_time), et.time_in),0) as lateness, 
+							ifnull(p.total_units,0)*60 as permit_minutes, ifnull(p.is_early_leave,0) as is_early_leave, e.date_of_joining, e.relieving_date 
 							from `tabEmployee Transactions` et 
 							left join `tabPermit Application` p on p.name=et.permit_application 
-							where et.docstatus=0 and (et.lateness_minutes>0 
+							left join `tabEmployee` e on e.name=et.employee
+							where et.docstatus=0 and et.is_holiday=0 and (et.is_leave=0 or et.half_day=1) and (et.lateness_minutes>0 
 							or et.early_exit_minutes>0) and et.ignore_lateness=0 and et.transaction_year=%(trans_year)s and et.transaction_month=%(trans_month)s
 							and et.employee in (select name from `tabEmployee` where status='Active' {condition})""".format(condition=cond), 
 							{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
 		for t in trans:
-			if not t.shift:
-				frappe.throw(_("No Shift Defined for Employee {0}.").format(t.employee))
-			shift_type = frappe.db.get_value("Shifts", t.shift, "shift_type")
-			if not shift_type:
-				shift_type = ""
-			if t.is_early_leave == 1:
-				permit_minutes = 0
-				permit_minutes2 = t.permit_minutes
-			else:
-				permit_minutes = t.permit_minutes
-				permit_minutes2 = 0
-			actual_late_minutes = t.lateness_minutes - permit_minutes
-			if t.lateness > 0 and actual_late_minutes >= start_lateness_minute and t.bus_delay == 0:
-				punishment = frappe.db.sql("""select name, punishment_type from `tabPunishment Rule` 
-							where rule_type='Lateness' and (shift_type=%(shift_type)s or isnull(shift_type) or trim(shift_type)='') 
-							and from_m<=%(late_mintues)s and to_m>=%(late_mintues)s order by shift_type DESC limit 1""", 
-							{"late_mintues": actual_late_minutes, "shift_type": shift_type}, as_dict=1)
-				if punishment:
-					p = frappe.new_doc('Employee Punishment')
-					p.posting_date = t.posting_date
-					p.employee = t.employee
-					p.punishment_name = punishment[0].name
-					p.punishment_type = punishment[0].punishment_type
-					p.company = self.company
-					p.business_unit = self.business_unit
-					p.is_auto_generated = 1
-					p.transaction_month = self.transaction_month
-					p.transaction_year = self.transaction_year
-					p.insert()
-					p.submit()
-					frappe.db.set_value("Employee Transactions", t.name, "punishment", p.name)
-					frappe.db.set_value("Employee Transactions", t.name, "punishment_name", p.punishment_name)
+			if getdate(t.posting_date) >= getdate(t.date_of_joining) and getdate(t.posting_date) <= getdate(t.relieving_date):
+				if not t.shift:
+					frappe.throw(_("No Shift Defined for Employee {0}.").format(t.employee))
+				shift_type = frappe.db.get_value("Shifts", t.shift, "shift_type")
+				if not shift_type:
+					shift_type = ""
+				if t.is_early_leave == 1:
+					permit_minutes = 0
+					permit_minutes2 = t.permit_minutes
 				else:
-					frappe.throw(_("No Punishment Rules Defined for Lateness to Apply. Employee {0}, Transaction {1}").format(t.employee, t.name))
-			
-			actual_late_minutes = t.early_exit_minutes - permit_minutes2
-			if actual_late_minutes > 0:
-				punishment = frappe.db.sql("""select name, punishment_type from `tabPunishment Rule` 
-							where rule_type='Early Exit' and (shift_type=%(shift_type)s or isnull(shift_type) or trim(shift_type)='') 
-							order by shift_type DESC limit 1""", 
-							{"shift_type": shift_type}, as_dict=1)
-				if punishment:
-					p = frappe.new_doc('Employee Punishment')
-					p.posting_date = t.posting_date
-					p.employee = t.employee
-					p.punishment_name = punishment[0].name
-					p.punishment_type = punishment[0].punishment_type
-					p.company = self.company
-					p.business_unit = self.business_unit
-					p.is_auto_generated = 1
-					p.transaction_month = self.transaction_month
-					p.transaction_year = self.transaction_year
-					p.insert()
-					p.submit()
-					frappe.db.set_value("Employee Transactions", t.name, "punishment", p.name)
-					frappe.db.set_value("Employee Transactions", t.name, "punishment_name", p.punishment_name)
-				else:
-					frappe.throw(_("No Punishment Rules Defined for Early Exit to Apply."))
+					permit_minutes = t.permit_minutes
+					permit_minutes2 = 0
+				actual_late_minutes = t.lateness_minutes - permit_minutes
+				if t.lateness > 0 and actual_late_minutes >= start_lateness_minute and t.bus_delay == 0:
+					punishment = frappe.db.sql("""select name, punishment_type from `tabPunishment Rule` 
+								where rule_type='Lateness' and (shift_type=%(shift_type)s or isnull(shift_type) or trim(shift_type)='') 
+								and from_m<=%(late_mintues)s and to_m>=%(late_mintues)s order by shift_type DESC limit 1""", 
+								{"late_mintues": actual_late_minutes, "shift_type": shift_type}, as_dict=1)
+					if punishment:
+						p = frappe.new_doc('Employee Punishment')
+						p.posting_date = t.posting_date
+						p.employee = t.employee
+						p.punishment_name = punishment[0].name
+						p.punishment_type = punishment[0].punishment_type
+						p.company = self.company
+						p.business_unit = self.business_unit
+						p.is_auto_generated = 1
+						p.transaction_month = self.transaction_month
+						p.transaction_year = self.transaction_year
+						p.insert()
+						p.submit()
+						frappe.db.set_value("Employee Transactions", t.name, "punishment", p.name)
+						frappe.db.set_value("Employee Transactions", t.name, "punishment_name", p.punishment_name)
+					else:
+						frappe.throw(_("No Punishment Rules Defined for Lateness to Apply. Employee {0}, Transaction {1}").format(t.employee, t.name))
+				
+				actual_late_minutes = t.early_exit_minutes - permit_minutes2
+				if actual_late_minutes > 0:
+					punishment = frappe.db.sql("""select name, punishment_type from `tabPunishment Rule` 
+								where rule_type='Early Exit' and (shift_type=%(shift_type)s or isnull(shift_type) or trim(shift_type)='') 
+								order by shift_type DESC limit 1""", 
+								{"shift_type": shift_type}, as_dict=1)
+					if punishment:
+						p = frappe.new_doc('Employee Punishment')
+						p.posting_date = t.posting_date
+						p.employee = t.employee
+						p.punishment_name = punishment[0].name
+						p.punishment_type = punishment[0].punishment_type
+						p.company = self.company
+						p.business_unit = self.business_unit
+						p.is_auto_generated = 1
+						p.transaction_month = self.transaction_month
+						p.transaction_year = self.transaction_year
+						p.insert()
+						p.submit()
+						frappe.db.set_value("Employee Transactions", t.name, "punishment", p.name)
+						frappe.db.set_value("Employee Transactions", t.name, "punishment_name", p.punishment_name)
+					else:
+						frappe.throw(_("No Punishment Rules Defined for Early Exit to Apply."))
 					
 		trans = frappe.db.sql("""select * from (
-								select et.name, et.employee, et.shift, et.posting_date, et.ignore_lateness, et.is_holiday, et.is_leave, 
-								if(length(mission_application)>1,1,0) as is_mission, 
+								select et.name, et.employee, et.shift, et.posting_date, et.ignore_lateness, et.is_holiday, et.is_leave, et.half_day, 
 								if(isnull(et.time_in) and isnull(et.time_out),3,if(isnull(et.time_in),1,if(isnull(et.time_out),2,0))) as no_punch, 
-								s.apply_absent, s.absent_punishment_rule, s.in_out_punishment_rule
+								s.apply_absent, s.absent_punishment_rule, s.in_out_punishment_rule, e.date_of_joining, e.relieving_date
 								from `tabEmployee Transactions` et
 								left join `tabShifts` s on s.name=et.shift
+								left join `tabEmployee` e on e.name=et.employee
 								where et.docstatus=0 
 								and et.transaction_year=%(trans_year)s and et.transaction_month=%(trans_month)s) a
-								where  no_punch>0 and is_holiday=0 and is_leave=0 and is_mission=0
+								where  no_punch>0 and is_holiday=0 and (is_leave=0 or half_day=1) 
 								and employee in (select name from `tabEmployee` where status='Active' {condition})""".format(condition=cond), 
 								{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
 		for t in trans:
-			if not t.shift:
-				frappe.throw(_("No Shift Defined for Employee {0}.").format(t.employee))
-			if t.no_punch < 3:
-				punishment_rule = t.in_out_punishment_rule if t.in_out_punishment_rule else None
-			else:
-				punishment_rule = t.absent_punishment_rule if t.absent_punishment_rule else None
-			
-			if punishment_rule:
-				punishment = frappe.db.sql("""select name, punishment_type from `tabPunishment Rule` 
-							where name=%(punishment_rule)s""", 
-							{"punishment_rule": punishment_rule}, as_dict=1)
-						
-			if punishment and punishment_rule:
-				p = frappe.new_doc('Employee Punishment')
-				p.posting_date = t.posting_date
-				p.employee = t.employee
-				p.punishment_name = punishment_rule
-				p.punishment_type = punishment[0].punishment_type
-				p.company = self.company
-				p.business_unit = self.business_unit
-				p.is_auto_generated = 1
-				p.transaction_month = self.transaction_month
-				p.transaction_year = self.transaction_year
-				p.insert()
-				p.submit()
-				frappe.db.set_value("Employee Transactions", t.name, "punishment", p.name)
-				frappe.db.set_value("Employee Transactions", t.name, "punishment_name", p.punishment_name)
+			if getdate(t.posting_date) >= getdate(t.date_of_joining) and getdate(t.posting_date) <= getdate(t.relieving_date):
+				if not t.shift:
+					frappe.throw(_("No Shift Defined for Employee {0}.").format(t.employee))
+				if t.no_punch < 3:
+					punishment_rule = t.in_out_punishment_rule if t.in_out_punishment_rule else None
+				else:
+					punishment_rule = t.absent_punishment_rule if (t.apply_absent==1 and t.absent_punishment_rule) else None
 				
-
-	def delete_punishments_unposted(self):
-		cond = self.get_employees()
-		trans = frappe.db.sql("""select name, punishment from `tabEmployee Transactions` where (lateness_minutes>0 or early_exit_minutes>0) 
-							and ignore_lateness=0 and transaction_year=%(trans_year)s and transaction_month=%(trans_month)s
-							and payroll_processed=0 and not isnull(punishment)
-							and employee in (select name from `tabEmployee` where 1=1 {condition})""".format(condition=cond), 
-							{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
-		for t in trans:
-			frappe.db.set_value("Employee Transactions", t.name, "punishment", None)
-			frappe.db.set_value("Employee Transactions", t.name, "punishment_name", None)
-			p = frappe.get_doc('Employee Punishment', t.punishment)
-			#p.flags.ignore_permissions = True
-			p.cancel()
-			#p.delete()
-		
-		trans = frappe.db.sql("""select name, punishment from `tabEmployee Transactions` where (ifnull(time_in,0)=0 or ifnull(time_out,0)=0) 
-							and transaction_year=%(trans_year)s and transaction_month=%(trans_month)s
-							and payroll_processed=0 and not isnull(punishment)
-							and employee in (select name from `tabEmployee` where 1=1 {condition})""".format(condition=cond), 
-							{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
-		for t in trans:
-			frappe.db.set_value("Employee Transactions", t.name, "punishment", None)
-			frappe.db.set_value("Employee Transactions", t.name, "punishment_name", None)
-			p = frappe.get_doc('Employee Punishment', t.punishment)
-			#p.flags.ignore_permissions = True
-			p.cancel()
-			#p.delete()
-		frappe.db.commit()
-
-	def delete_punishments(self):
-		cond = self.get_employees()
-		trans = frappe.db.sql("""select name, punishment from `tabEmployee Transactions` where docstatus=1 and (lateness_minutes>0 or early_exit_minutes>0) 
-							and ignore_lateness=0 and transaction_year=%(trans_year)s and transaction_month=%(trans_month)s
-							and payroll_processed=0 and not isnull(punishment)
-							and employee in (select name from `tabEmployee` where 1=1 {condition})""".format(condition=cond), 
-							{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
-		for t in trans:
-			frappe.db.set_value("Employee Transactions", t.name, "punishment", None)
-			frappe.db.set_value("Employee Transactions", t.name, "punishment_name", None)
-			p = frappe.get_doc('Employee Punishment', t.punishment)
-			#p.flags.ignore_permissions = True
-			p.cancel()
-			#p.delete()
-
-		trans = frappe.db.sql("""select name, punishment from `tabEmployee Transactions` where docstatus=1 and (ifnull(time_in,0)=0 or ifnull(time_out,0)=0) 
-							and transaction_year=%(trans_year)s and transaction_month=%(trans_month)s
-							and payroll_processed=0 and not isnull(punishment)
-							and employee in (select name from `tabEmployee` where 1=1 {condition})""".format(condition=cond), 
-							{"trans_year": self.transaction_year, "trans_month": self.transaction_month}, as_dict=1)
-		for t in trans:
-			frappe.db.set_value("Employee Transactions", t.name, "punishment", None)
-			frappe.db.set_value("Employee Transactions", t.name, "punishment_name", None)
-			p = frappe.get_doc('Employee Punishment', t.punishment)
-			#p.flags.ignore_permissions = True
-			p.cancel()
-			#p.delete()
-		frappe.db.commit()
-
+				if punishment_rule:
+					punishment = frappe.db.sql("""select name, punishment_type from `tabPunishment Rule` 
+								where name=%(punishment_rule)s""", 
+								{"punishment_rule": punishment_rule}, as_dict=1)
+				else:
+					punishment = None
+							
+				if punishment and punishment_rule:
+					p = frappe.new_doc('Employee Punishment')
+					p.posting_date = t.posting_date
+					p.employee = t.employee
+					p.punishment_name = punishment_rule
+					p.punishment_type = punishment[0].punishment_type
+					p.company = self.company
+					p.business_unit = self.business_unit
+					p.is_auto_generated = 1
+					p.transaction_month = self.transaction_month
+					p.transaction_year = self.transaction_year
+					p.insert()
+					p.submit()
+					frappe.db.set_value("Employee Transactions", t.name, "punishment", p.name)
+					frappe.db.set_value("Employee Transactions", t.name, "punishment_name", p.punishment_name)
+				
 	def update_transactions(self, starting_date=None):
 		start_day, end_day = self.get_transactions_period()
 		if not starting_date:
@@ -357,18 +351,19 @@ class EmployeeTransactionsTool(Document):
 			if lv.leave_type_type == "Mission":
 				while leave_date <= lv.to_date:
 					if getdate(leave_date) >= getdate(start_day) and getdate(leave_date) <= getdate(end_day):
-						frappe.db.sql("""update `tabEmployee Transactions` set mission_application=%(name)s , half_day=if(posting_date=%(hdd)s,%(hd)s,0)
+						frappe.db.sql("""update `tabEmployee Transactions` set mission_application=%(name)s , from_time=%(from_time)s, to_time=%(to_time)s
 							where docstatus=0 
 							and employee=%(employee)s and posting_date=%(leave_date)s""", {'name': lv.name, 'employee': lv.employee, 'leave_date': leave_date, 
-							'hd': lv.half_day, 'hdd':lv.half_day_date})
+							'from_time': lv.from_time, 'to_time':lv.to_time})
 					leave_date = add_days(leave_date, 1)
 			else:
 				while leave_date <= lv.to_date:
 					if getdate(leave_date) >= getdate(start_day) and getdate(leave_date) <= getdate(end_day):
-						frappe.db.sql("""update `tabEmployee Transactions` set is_leave=1, leave_type=%(leave_type)s, leave_application=%(name)s, half_day=if(posting_date=%(hdd)s,%(hd)s,0) 
+						frappe.db.sql("""update `tabEmployee Transactions` set is_leave=1, leave_type=%(leave_type)s, 
+							leave_application=%(name)s, half_day=if(posting_date=%(hdd)s,%(hd)s,0), evening=%(evening)s 
 							where docstatus=0 
 							and employee=%(employee)s and posting_date=%(leave_date)s""", {'name': lv.name, 'employee': lv.employee, 'leave_date': leave_date, 
-							'hd': lv.half_day, 'hdd':lv.half_day_date, 'leave_type': lv.leave_type})
+							'hd': lv.half_day, 'evening': lv.evening, 'hdd':lv.half_day_date, 'leave_type': lv.leave_type})
 					leave_date = add_days(leave_date, 1)
 			
 		############# permits 
@@ -387,7 +382,8 @@ class EmployeeTransactionsTool(Document):
 		############# Route Attendance 
 		
 		employees = frappe.db.sql("""select name, route from `tabEmployee`  
-			where employee in (select name from tabEmployee where status='Active' {condition})""".format(condition=cond),  as_dict=1)
+			where (not isnull(route)) and 
+			employee in (select name from tabEmployee where status='Active' {condition})""".format(condition=cond),  as_dict=1)
 			
 		for emp in employees:
 			frappe.db.sql("""update `tabEmployee Transactions` et
@@ -461,7 +457,9 @@ class EmployeeTransactionsTool(Document):
 				and et.employee in (select name from `tabEmployee` where status='Active' {condition}) 
 				and et.posting_date>=%(start_day)s and et.posting_date<=%(end_day)s""".format(condition=cond), { 
 				'start_day': start_day, 'end_day': end_day})
-		self.update_overtime()
+		#self.update_overtime()
+		
+		self.prepare_from_to_time()
 
 		frappe.db.commit()
 				
@@ -469,6 +467,12 @@ class EmployeeTransactionsTool(Document):
 		cond = self.get_employees()
 		start_day, end_day = self.get_transactions_period()
 	
+		frappe.db.sql("""update `tabEmployee Transactions` et set et.overtime_minutes=0 
+			where et.docstatus=0 and not isnull(et.time_in) and not isnull(et.time_out)
+			and employee in (select name from `tabEmployee` where status='Active' {condition}) 
+			and posting_date>=%(start_day)s and posting_date<=%(end_day)s""".format(condition=cond), { 
+			'start_day': start_day, 'end_day': end_day})
+
 		frappe.db.sql("""update `tabEmployee Transactions` set  
 			overtime_minutes=TIMESTAMPDIFF(MINUTE, time_in, time_out), 
 			lateness_minutes=0, 
@@ -484,13 +488,26 @@ class EmployeeTransactionsTool(Document):
 									TIMESTAMPDIFF(MINUTE, s.end_time, et.time_out),0) + 
 								 if(s.start_time>et.time_in and TIMESTAMPDIFF(MINUTE, et.time_in, s.start_time)>s.minutes_before, 
 									TIMESTAMPDIFF(MINUTE, et.time_in, s.start_time),0)
-			where et.docstatus=0 and et.is_holiday<>1 and not isnull(et.time_in) and not isnull(et.time_out)
+			where et.docstatus=0 and et.is_holiday<>1 and et.half_day=0 and isnull(et.mission_application) and not isnull(et.time_in) and not isnull(et.time_out)
+			and employee in (select name from `tabEmployee` where status='Active' {condition}) 
+			and posting_date>=%(start_day)s and posting_date<=%(end_day)s""".format(condition=cond), { 
+			'start_day': start_day, 'end_day': end_day})
+			
+		frappe.db.sql("""update `tabEmployee Transactions` et 
+			left join `tabShifts` s on s.name=et.shift
+			set et.overtime_minutes=if(et.to_time<et.time_out and TIMESTAMPDIFF(MINUTE, et.to_time, et.time_out)>s.minutes_after, 
+									TIMESTAMPDIFF(MINUTE, et.to_time, et.time_out),0) + 
+								 if(et.from_time>et.time_in and TIMESTAMPDIFF(MINUTE, et.time_in, et.from_time)>s.minutes_before, 
+									TIMESTAMPDIFF(MINUTE, et.time_in, et.from_time),0)
+			where et.docstatus=0 and et.is_holiday<>1 and (et.half_day=1 or not isnull(et.mission_application)) and not isnull(et.time_in) and not isnull(et.time_out)
 			and employee in (select name from `tabEmployee` where status='Active' {condition}) 
 			and posting_date>=%(start_day)s and posting_date<=%(end_day)s""".format(condition=cond), { 
 			'start_day': start_day, 'end_day': end_day})
 
 @frappe.whitelist()
-def change_shift(posting_date, employee, shift, company, business_unit):
+def change_shift(posting_date, employee, shift, company, business_unit, old_shift=None, one_day=0):
+	frappe.db.sql("""delete from `tabShift Changes` where employee=%s and posting_date=%s""", (employee,posting_date))
+		
 	sh = frappe.new_doc('Shift Changes')
 	sh.posting_date = posting_date
 	sh.employee = employee
@@ -499,42 +516,86 @@ def change_shift(posting_date, employee, shift, company, business_unit):
 	sh.business_unit = business_unit
 	sh.insert()
 	sh.submit()
-	
-	x_date = frappe.db.sql("""select posting_date from `tabShift Changes` s
-		where posting_date>%(posting_date)s and docstatus=1 
-		and employee=%(employee)s 
-		order by s.posting_date ASC limit 1""",	{'employee': employee, 'posting_date': posting_date}, as_dict=1)
-	
-	if not x_date:
-		next_date = "2999-12-31"
-	else:
-		next_date = x_date[0].posting_date
 		
+	if cint(one_day) == 1 and not frappe.db.sql("""select name from `tabShift Changes` 
+				where employee=%s and posting_date=DATE_ADD(%s, INTERVAL 1 DAY)""", (employee,posting_date)):
+		sh2 = frappe.new_doc('Shift Changes')
+		sh2.posting_date = add_days(getdate(posting_date), 1)
+		sh2.employee = employee
+		sh2.shift = old_shift
+		sh2.company = company
+		sh2.business_unit = business_unit
+		sh2.insert()
+		sh2.submit()
+
 	shf = frappe.get_doc("Shifts", shift)
 		
-	frappe.db.sql("""update `tabEmployee Transactions` set shift=%(shift)s, ignore_lateness=%(ls)s, enable_overtime=%(ot)s, 
-		overtime_minutes=if(time(%(end_time)s)<time_out, TIMESTAMPDIFF(MINUTE, time(%(end_time)s), time_out),0), 
-		lateness_minutes=if(time(%(start_time)s)<time_in, TIMESTAMPDIFF(MINUTE, time(%(start_time)s), time_in),0), 
-		early_exit_minutes=if(time_out<time(%(end_time)s), TIMESTAMPDIFF(MINUTE, time_out, time(%(end_time)s)),0), shift_late_time = %(late_time)s
-		where docstatus=0 
-		and employee=%(employee)s and posting_date>=%(posting_date)s and posting_date<%(next_date)s""", {'shift': shift, 'employee': employee, 
-		'posting_date': posting_date, 'next_date': next_date, 
-		'ls': shf.ignore_lateness, 'ot': shf.enable_overtime, 'end_time': shf.end_time, 'start_time': shf.start_time, 'late_time': shf.late_time})
+	if cint(one_day) == 0:
+		x_date = frappe.db.sql("""select posting_date from `tabShift Changes` s
+			where posting_date>%(posting_date)s and docstatus=1 
+			and employee=%(employee)s 
+			order by s.posting_date ASC limit 1""",	{'employee': employee, 'posting_date': posting_date}, as_dict=1)
 		
-	############# Adjust Holiday according to Shift change
+		if not x_date:
+			next_date = "2999-12-31"
+		else:
+			next_date = x_date[0].posting_date
+			
+			
+		frappe.db.sql("""update `tabEmployee Transactions` set shift=%(shift)s, ignore_lateness=%(ls)s, enable_overtime=%(ot)s, 
+			overtime_minutes=if(time(%(end_time)s)<time_out, TIMESTAMPDIFF(MINUTE, time(%(end_time)s), time_out),0), 
+			lateness_minutes=if(time(%(start_time)s)<time_in, TIMESTAMPDIFF(MINUTE, time(%(start_time)s), time_in),0), 
+			early_exit_minutes=if(time_out<time(%(end_time)s), TIMESTAMPDIFF(MINUTE, time_out, time(%(end_time)s)),0), shift_late_time = %(late_time)s
+			where docstatus=0 
+			and employee=%(employee)s and posting_date>=%(posting_date)s and posting_date<%(next_date)s""", {'shift': shift, 'employee': employee, 
+			'posting_date': posting_date, 'next_date': next_date, 
+			'ls': shf.ignore_lateness, 'ot': shf.enable_overtime, 'end_time': shf.end_time, 'start_time': shf.start_time, 'late_time': shf.late_time})
+			
+		############# Adjust Holiday according to Shift change
+		
+		frappe.db.sql("""update `tabEmployee Transactions` et 
+				left join `tabEmployee` e on e.name=et.employee
+				left join `tabShifts` s on s.name=et.shift
+				left join `tabHoliday` h1 on h1.parent=s.holiday_list and et.posting_date=h1.holiday_date
+				left join `tabHoliday` h2 on h2.parent=e.holiday_list and et.posting_date=h2.holiday_date
+				set et.is_holiday=if(isnull(h1.holiday_date) and isnull(h2.holiday_date), 0, 1)
+				where et.docstatus=0 
+				and et.employee=%(employee)s 
+				and et.posting_date>=%(start_day)s""", {'start_day': posting_date, 'employee': employee})
 	
-	frappe.db.sql("""update `tabEmployee Transactions` et 
-			left join `tabEmployee` e on e.name=et.employee
-			left join `tabShifts` s on s.name=et.shift
-			left join `tabHoliday` h1 on h1.parent=s.holiday_list and et.posting_date=h1.holiday_date
-			left join `tabHoliday` h2 on h2.parent=e.holiday_list and et.posting_date=h2.holiday_date
-			set et.is_holiday=if(isnull(h1.holiday_date) and isnull(h2.holiday_date), 0, 1)
-			where et.docstatus=0 
-			and et.employee=%(employee)s 
-			and et.posting_date>=%(start_day)s""", {'start_day': posting_date, 'employee': employee})
+	else:
+		frappe.db.sql("""update `tabEmployee Transactions` set shift=%(shift)s, ignore_lateness=%(ls)s, enable_overtime=%(ot)s, 
+			overtime_minutes=if(time(%(end_time)s)<time_out, TIMESTAMPDIFF(MINUTE, time(%(end_time)s), time_out),0), 
+			lateness_minutes=if(time(%(start_time)s)<time_in, TIMESTAMPDIFF(MINUTE, time(%(start_time)s), time_in),0), 
+			early_exit_minutes=if(time_out<time(%(end_time)s), TIMESTAMPDIFF(MINUTE, time_out, time(%(end_time)s)),0), shift_late_time = %(late_time)s
+			where docstatus=0 
+			and employee=%(employee)s and posting_date=%(posting_date)s""", {'shift': shift, 'employee': employee, 
+			'posting_date': posting_date,  
+			'ls': shf.ignore_lateness, 'ot': shf.enable_overtime, 'end_time': shf.end_time, 'start_time': shf.start_time, 'late_time': shf.late_time})
+			
+		############# Adjust Holiday according to Shift change
+		
+		frappe.db.sql("""update `tabEmployee Transactions` et 
+				left join `tabEmployee` e on e.name=et.employee
+				left join `tabShifts` s on s.name=et.shift
+				left join `tabHoliday` h1 on h1.parent=s.holiday_list and et.posting_date=h1.holiday_date
+				left join `tabHoliday` h2 on h2.parent=e.holiday_list and et.posting_date=h2.holiday_date
+				set et.is_holiday=if(isnull(h1.holiday_date) and isnull(h2.holiday_date), 0, 1)
+				where et.docstatus=0 
+				and et.employee=%(employee)s 
+				and et.posting_date=%(start_day)s""", {'start_day': posting_date, 'employee': employee})
+	
 		
 @frappe.whitelist()
-def change_time(posting_date, employee, shift, fieldname, key_name, new_value):
+def change_time(posting_date, employee, shift, fieldname, key_name, new_value=None):
+	if new_value==None or new_value.strip()=='':
+		old_value = frappe.db.sql("""select time_in, time_out  from `tabAttendance` where employee=%(employee)s and attendance_date=%(att_date)s""",
+							{'employee': employee,'att_date': posting_date}, as_dict=1)
+		if old_value:
+			new_value = old_value[0][fieldname]
+		else:
+			new_value = None
+	
 	frappe.db.set_value("Employee Transactions", key_name, fieldname, new_value)
 	shf = frappe.get_doc("Shifts", shift)
 	frappe.db.sql("""update `tabEmployee Transactions` set attendance_hours=timediff(time_out, time_in), 
@@ -559,6 +620,7 @@ def change_permit(permit_date, employee, total_units, company, business_unit, is
 	pmt.total_units = flt(total_units)
 	pmt.company = company
 	pmt.business_unit = business_unit
+	pmt.transaction = 1
 	pmt.insert()
 	pmt.submit()
 	frappe.db.sql("""update `tabEmployee Transactions` set permit_application=%(name)s, permit_hours=%(total_units)s  
@@ -566,7 +628,7 @@ def change_permit(permit_date, employee, total_units, company, business_unit, is
 					{"name": pmt.name, "employee": employee, "permit_date": permit_date, "total_units": total_units})
 	
 @frappe.whitelist()
-def change_leave(from_date, to_date, leave_type, naming_series, employee, company, business_unit, half_day=0):
+def change_leave(from_date, to_date, leave_type, naming_series, employee, company, business_unit, half_day=0, evening=0,from_time=None,to_time=None,direction=None):
 	lv_type = frappe.get_value("Leave Type", leave_type, "leave_type")
 	lv = frappe.new_doc('Leave Application')
 	lv.naming_series = naming_series
@@ -579,18 +641,30 @@ def change_leave(from_date, to_date, leave_type, naming_series, employee, compan
 	lv.leave_approver = frappe.session.user
 	lv.employee = employee
 	lv.half_day = half_day
+	lv.evening = evening
+	lv.from_time = from_time
+	lv.to_time = to_time
+	lv.direction = direction
 	lv.company = company
 	lv.business_unit = business_unit
+	lv.transaction = 1
 	lv.insert()
 	lv.submit()
 	if leave_type == "مأمورية":
-		frappe.db.sql("""update `tabEmployee Transactions` set mission_application=%(name)s, half_day=%(half_day)s
+		frappe.db.sql("""update `tabEmployee Transactions` set mission_application=%(name)s, from_time=%(from_time)s, to_time=%(to_time)s 
 						where docstatus=0 and employee=%(employee)s and posting_date>=%(from_date)s and posting_date<=%(to_date)s""", 
-						{"name": lv.name, "half_day": half_day, "employee": employee, "from_date": from_date, "to_date": to_date})
+						{"name": lv.name, "from_time": from_time, "to_time": to_time, "employee": employee, 
+						"from_date": from_date, "to_date": to_date})
 	else:
-		frappe.db.sql("""update `tabEmployee Transactions` set leave_application=%(name)s, half_day=%(half_day)s, is_leave=1, leave_type=%(leave_type)s  
+		frappe.db.sql("""update `tabEmployee Transactions` set leave_application=%(name)s, half_day=%(half_day)s, evening=%(evening)s, 
+						is_leave=1, leave_type=%(leave_type)s, punishment=null, punishment_name=null 
 						where docstatus=0 and employee=%(employee)s and posting_date>=%(from_date)s and posting_date<=%(to_date)s""", 
-						{"name": lv.name, "half_day": half_day, "employee": employee, "from_date": from_date, "to_date": to_date, "leave_type": leave_type})
+						{"name": lv.name, "half_day": half_day, "evening": evening, "employee": employee, 
+						"from_date": from_date, "to_date": to_date, "leave_type": leave_type})
+		
+	frappe.db.sql("""Delete from `tabEmployee Punishment` 
+					where employee=%(employee)s and posting_date>=%(from_date)s and posting_date<=%(to_date)s and is_auto_generated=1""", 
+					{"employee": employee, "from_date": from_date, "to_date": to_date})
 	
 @frappe.whitelist()
 def leave_query(doctype, txt, searchfield, start, page_len, filters):

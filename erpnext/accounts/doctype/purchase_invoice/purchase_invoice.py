@@ -411,7 +411,7 @@ class PurchaseInvoice(BuyingController):
 							"business_unit": item.business_unit,
 							"against_voucher": item.asset if item.asset else None,
 							"against_voucher_type": "Asset" if item.asset else None,
-							"project": item.project
+							"project": item.project or self.project
 						}, account_currency)
 					)
 
@@ -426,7 +426,7 @@ class PurchaseInvoice(BuyingController):
 							"business_unit": item.business_unit,
 							"against_voucher": item.asset if item.asset else None,
 							"against_voucher_type": "Asset" if item.asset else None,
-							"project": item.project
+							"project": item.project or self.project
 						}))
 
 					# sub-contracting warehouse
@@ -458,7 +458,7 @@ class PurchaseInvoice(BuyingController):
 							"business_unit": item.business_unit, 
 							"against_voucher": item.asset if item.asset else None,
 							"against_voucher_type": "Asset" if item.asset else None,
-							"project": item.project
+							"project": item.project or self.project
 						}, account_currency)
 					)
 

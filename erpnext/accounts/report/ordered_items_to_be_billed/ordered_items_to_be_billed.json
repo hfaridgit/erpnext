@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 3, 
  "is_standard": "Yes", 
- "modified": "2017-11-06 13:04:51.559061", 
+ "modified": "2018-10-24 12:54:57.276295", 
  "modified_by": "Administrator", 
  "module": "Accounts", 
  "name": "Ordered Items To Be Billed", 
@@ -18,10 +18,16 @@
  "report_type": "Script Report", 
  "roles": [
   {
-   "role": "Accounts Manager"
+   "role": "Mifad - Accounts Manager"
   }, 
   {
-   "role": "Accounts User"
+   "role": "Mifad - Accounts User"
+  }, 
+  {
+   "role": "Mifad - Stock User"
+  }, 
+  {
+   "role": "Mifad - Sales User"
   }
  ]
 }

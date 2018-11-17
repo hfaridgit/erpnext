@@ -11,9 +11,10 @@ frappe.ui.form.on('Mission Planning', {
 	refresh: function(frm) {
 		if (frm.doc.__islocal) {
 			frm.flg = 1;
-			var now = new Date();
-			var onejan = new Date(now.getFullYear(), 0, 1);
-			w = Math.ceil( (((now - onejan) / 86400000) + onejan.getDay()) / 7 )-1;
+			//var now = new Date();
+			//var onejan = new Date(now.getFullYear(), 0, 1);
+			//w = Math.ceil( (((now - onejan) / 86400000) + onejan.getDay()) / 7 )-1;
+			w = moment().isoWeek();
 			frm.set_value("year",(new Date()).getFullYear());
 			frm.set_value("week",w);
 		} else {

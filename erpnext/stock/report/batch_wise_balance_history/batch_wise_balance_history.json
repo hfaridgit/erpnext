@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 3, 
  "is_standard": "Yes", 
- "modified": "2017-02-24 20:19:13.150769", 
+ "modified": "2018-08-29 16:59:36.543930", 
  "modified_by": "Administrator", 
  "module": "Stock", 
  "name": "Batch-Wise Balance History", 
@@ -21,6 +21,9 @@
   }, 
   {
    "role": "Accounts Manager"
+  }, 
+  {
+   "role": "R & D"
   }
  ]
 }

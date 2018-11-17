@@ -40,7 +40,8 @@ class SalarySlip(TransactionBase):
 
 		# if self.salary_slip_based_on_timesheet or not self.net_pay:
 		self.calculate_net_pay()
-
+		self.update_child_tables()
+		
 		company_currency = erpnext.get_company_currency(self.company)
 		self.total_in_words = money_in_words(self.rounded_total, company_currency)
 
@@ -63,7 +64,8 @@ class SalarySlip(TransactionBase):
 		for key in ('earnings', 'deductions'):
 			for struct_row in self._salary_structure_doc.get(key):
 				amount = self.eval_condition_and_formula(struct_row, data)
-				if amount and struct_row.statistical_component == 0:
+				#if amount and struct_row.statistical_component == 0:
+				if amount:
 					self.update_component_row(struct_row, amount, key)
 
 	def update_component_row(self, struct_row, amount, key):
@@ -79,10 +81,12 @@ class SalarySlip(TransactionBase):
 				'depends_on_lwp' : struct_row.depends_on_lwp,
 				'salary_component' : struct_row.salary_component,
 				'abbr' : struct_row.abbr,
-				'do_not_include_in_total' : struct_row.do_not_include_in_total
+				'do_not_include_in_total' : struct_row.do_not_include_in_total,
+				'statistical_component' : struct_row.statistical_component
 			})
 		else:
 			component_row.amount = amount
+			#component_row.statistical_component = struct_row.statistical_component
 
 	def eval_condition_and_formula(self, d, data):
 		try:
@@ -386,13 +390,28 @@ class SalarySlip(TransactionBase):
 				d.amount = 0
 			elif not d.amount:
 				d.amount = d.default_amount
-			if not d.do_not_include_in_total:
+			if not d.do_not_include_in_total and not d.statistical_component:
 				self.set(total_field, self.get(total_field) + flt(d.amount))
 
+	def update_child_tables(self):
+		earn = []
+		ded = []
+
+		for row in self.earnings:
+			if row.statistical_component == 0:
+				earn.append(row) 
+		#		self.remove(row)
+		for row in self.deductions:
+			if row.statistical_component == 0:
+				ded.append(row)
+		#		self.remove(row)
+		self.earnings = earn
+		self.deductions = ded
+	
 	def calculate_net_pay(self):
 		if self.salary_structure:
 			self.calculate_component_amounts()
-
+			
 		disable_rounded_total = cint(frappe.db.get_value("Global Defaults", None, "disable_rounded_total"))
 
 		self.total_deduction = 0
@@ -416,6 +435,7 @@ class SalarySlip(TransactionBase):
 		for loan in self.get_employee_loan_details():
 			self.append('loans', {
 				'employee_loan': loan.name,
+				'loan_type': loan.loan_type, 
 				'total_payment': loan.total_payment,
 				'interest_amount': loan.interest_amount,
 				'principal_amount': loan.principal_amount,
@@ -429,7 +449,7 @@ class SalarySlip(TransactionBase):
 
 	def get_employee_loan_details(self):
 		return frappe.db.sql("""select rps.principal_amount, rps.interest_amount, el.name,
-				rps.total_payment, el.employee_loan_account, el.interest_income_account
+				rps.total_payment, el.employee_loan_account, el.interest_income_account, el.loan_type
 			from
 				`tabRepayment Schedule` as rps, `tabEmployee Loan` as el
 			where

@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2018-05-30 12:38:27.538457", 
+ "modified": "2018-10-24 13:39:56.139134", 
  "modified_by": "Administrator", 
  "module": "Accounts", 
  "name": "Item-wise Sales Register with Sales Person", 
@@ -17,10 +17,16 @@
  "report_type": "Script Report", 
  "roles": [
   {
-   "role": "Accounts Manager"
+   "role": "Mifad - Accounts Manager"
   }, 
   {
-   "role": "Accounts User"
+   "role": "Mifad - Accounts User"
+  }, 
+  {
+   "role": "Mifad - Sales User"
+  }, 
+  {
+   "role": "Mifad - Sales Manager"
   }
  ]
 }

@@ -324,6 +324,41 @@ def get_data():
 					"name": "Sales Person-wise Transaction Summary B",
 					"doctype": "Sales Invoice"
 				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Total Sales Person by Weak",
+					"doctype": "Sales Invoice"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Total Sales Person by Month",
+					"doctype": "Sales Invoice"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Quotation Trends with Sales Person",
+					"doctype": "Quotation"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Item-wise Sales History B",
+					"doctype": "Sales Order"
+				},
+				# @custom
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Customer Credit Balance B",
+					"doctype": "Customer"
+				},
 			]
 		},
 		{

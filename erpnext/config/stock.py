@@ -36,6 +36,12 @@ def get_data():
 				{
 					"type": "report",
 					"is_query_report": True,
+					"name": "Item Stock Ledger",
+					"doctype": "Stock Ledger Entry",
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
 					"name": "Stock Balance",
 					"doctype": "Stock Ledger Entry"
 				},
@@ -197,6 +203,10 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "Item Variant Settings",
+				},
+				{
+					"type": "doctype",
+					"name": "Quality Inspection Parameters",
 				},
 			]
 		},

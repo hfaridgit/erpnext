@@ -63,6 +63,9 @@ def make_employee_loan(source_name, target_doc = None):
 	doclist = get_mapped_doc("Employee Loan Application", source_name, {
 		"Employee Loan Application": {
 			"doctype": "Employee Loan",
+			"field_map": {
+				"repayment_amount": "monthly_repayment_amount"
+			},
 			"validation": {
 				"docstatus": ["=", 1]
 			}

@@ -16,7 +16,7 @@ def get_data():
 		'transactions': [
 			{
 				'label': _('Related'),
-				'items': ['Purchase Receipt', 'Purchase Invoice']
+				'items': ['Purchase Receipt', 'Purchase Invoice', 'Customs and Duties']
 			},
 			{
 				'label': _('Payment'),

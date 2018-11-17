@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 3, 
  "is_standard": "Yes", 
- "modified": "2017-03-06 05:52:57.645281", 
+ "modified": "2018-10-24 13:35:02.480262", 
  "modified_by": "Administrator", 
  "module": "Accounts", 
  "name": "Sales Partners Commission", 
@@ -18,10 +18,16 @@
  "report_type": "Query Report", 
  "roles": [
   {
-   "role": "Accounts Manager"
+   "role": "Mifad - Accounts Manager"
   }, 
   {
-   "role": "Accounts User"
+   "role": "Mifad - Accounts User"
+  }, 
+  {
+   "role": "Mifad - Sales User"
+  }, 
+  {
+   "role": "Mifad - Sales Manager"
   }
  ]
 }

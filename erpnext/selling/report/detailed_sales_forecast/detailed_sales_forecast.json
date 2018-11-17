@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2018-06-04 15:46:29.790533", 
+ "modified": "2018-10-25 12:40:51.113046", 
  "modified_by": "Administrator", 
  "module": "Selling", 
  "name": "Detailed Sales Forecast", 
@@ -18,6 +18,12 @@
  "roles": [
   {
    "role": "System Manager"
+  }, 
+  {
+   "role": "Mifad - Sales User"
+  }, 
+  {
+   "role": "Mifad - Sales Manager"
   }
  ]
 }

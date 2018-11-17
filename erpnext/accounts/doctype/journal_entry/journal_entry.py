@@ -99,6 +99,8 @@ class JournalEntry(AccountsController):
 
 	def validate_party(self):
 		for d in self.get("accounts"):
+			if self.project:
+				d.project = self.project
 			account_type = frappe.db.get_value("Account", d.account, "account_type")
 			if account_type in ["Receivable", "Payable"]:
 				if not (d.party_type and d.party):
@@ -437,7 +439,7 @@ class JournalEntry(AccountsController):
 						"remarks": self.remark,
 						"cost_center": d.cost_center,
 						"business_unit": d.business_unit,
-						"project": d.project
+						"project": d.project or self.project
 					})
 				)
 
@@ -682,10 +684,16 @@ def get_payment_entry(ref_doc, args):
 			args.get("party_account"), args.get("party_account_currency"),
 			ref_doc.company, ref_doc.doctype, ref_doc.name)
 
+	project = None
+	if ref_doc.doctype == "Purchase Invoice":
+		project = ref_doc.project
+
 	je = frappe.new_doc("Journal Entry")
 	je.update({
 		"voucher_type": "Bank Entry",
 		"company": ref_doc.company,
+		"business_unit": ref_doc.business_unit,
+		"project": project,
 		"remark": args.get("remarks")
 	})
 
@@ -694,6 +702,7 @@ def get_payment_entry(ref_doc, args):
 		"party_type": args.get("party_type"),
 		"party": ref_doc.get(args.get("party_type").lower()),
 		"cost_center": cost_center,
+		"project": project,
 		"account_type": frappe.db.get_value("Account", args.get("party_account"), "account_type"),
 		"account_currency": args.get("party_account_currency") or \
 							get_account_currency(args.get("party_account")),

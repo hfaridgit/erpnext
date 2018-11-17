@@ -5,43 +5,50 @@ frappe.ui.form.on('Employee Transactions Tool', {
 	refresh: function(frm) {
 		if(frm.doc.docstatus==1 && frm.doc.submitted==1) {
 			frm.add_custom_button(__('Re-Open'), function () {
-				return frappe.call({
-					doc: cur_frm.doc,
-					method: 'reopen_month_transactions',
-					freeze: true,
-					freeze_message: __("Openning ... Please Wait."),
-					callback: function() {
-						cur_frm.reload_doc();
-					}
+				frappe.confirm(__("Do you really want to Re-Open Transactions?"), function () {
+					return frappe.call({
+						doc: cur_frm.doc,
+						method: 'reopen_month_transactions',
+						freeze: true,
+						freeze_message: __("Openning ... Please Wait."),
+						callback: function() {
+							cur_frm.reload_doc();
+						}
+					});
 				});
 				//$c('runserverobj', { 'method': 'generate_month_transactions', 'docs': cur_frm.doc }, function (r, rt) {});
 			});
 		}
 		if(frm.doc.docstatus==1 && frm.doc.submitted==0) {
 			frm.add_custom_button(__('Generate Transactions'), function () {
-				return frappe.call({
-					doc: cur_frm.doc,
-					method: 'generate_month_transactions',
-					freeze: true,
-					freeze_message: __("Generating ... Please Wait."),
-					callback: function() {
-					}
+				frappe.confirm(__("Do you really want to Generate Transactions?"), function () {
+					return frappe.call({
+						doc: cur_frm.doc,
+						method: 'generate_month_transactions',
+						freeze: true,
+						freeze_message: __("Generating ... Please Wait."),
+						callback: function() {
+						}
+					});
 				});
 				//$c('runserverobj', { 'method': 'generate_month_transactions', 'docs': cur_frm.doc }, function (r, rt) {});
 			});
 			frm.add_custom_button(__('Re-Generate Transactions'), function () {
-				return frappe.call({
-					doc: cur_frm.doc,
-					method: 'regenerate_month_transactions',
-					freeze: true,
-					freeze_message: __("Re-Generating ... Please Wait."),
-					callback: function() {
-					}
+				frappe.confirm(__("Do you really want to Re-Generate Transactions?"), function () {
+					return frappe.call({
+						doc: cur_frm.doc,
+						method: 'regenerate_month_transactions',
+						freeze: true,
+						freeze_message: __("Re-Generating ... Please Wait."),
+						callback: function() {
+						}
+					});
 				});
 				//$c('runserverobj', { 'method': 'regenerate_month_transactions', 'docs': cur_frm.doc }, function (r, rt) {});
 			});
 			if(frm.doc.last_generate_date) {
 				frm.add_custom_button(__('Update Generated Transactions'), function () {
+				frappe.confirm(__("Do you really want to Update Transactions?"), function () {
 					return frappe.call({
 						doc: cur_frm.doc,
 						method: 'update_generated_transactions',
@@ -50,6 +57,7 @@ frappe.ui.form.on('Employee Transactions Tool', {
 						callback: function() {
 						}
 					});
+				});
 					//$c('runserverobj', { 'method': 'regenerate_month_transactions', 'docs': cur_frm.doc }, function (r, rt) {});
 				});
 			}
@@ -64,6 +72,20 @@ frappe.ui.form.on('Employee Transactions Tool', {
 						}
 					});
 					//$c('runserverobj', { 'method': 'delete_month_transactions', 'docs': cur_frm.doc }, function (r, rt) {});
+				});
+			});
+			frm.add_custom_button(__('Apply Rules'), function () {
+				frappe.confirm(__("Do you really want to Apply Rules?"), function () {
+					return frappe.call({
+						doc: cur_frm.doc,
+						method: 'apply_rules',
+						freeze: true,
+						freeze_message: __("Applying Rules ... Please Wait."),
+						callback: function() {
+							cur_frm.reload_doc();
+						}
+					});
+					//$c('runserverobj', { 'method': 'submit_month_transactions', 'docs': cur_frm.doc }, function (r, rt) {});
 				});
 			});
 			frm.add_custom_button(__('Submit Transactions'), function () {

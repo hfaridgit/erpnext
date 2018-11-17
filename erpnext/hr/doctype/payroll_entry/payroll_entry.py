@@ -109,8 +109,9 @@ class PayrollEntry(Document):
 						employee = %s and
 						start_date >= %s and
 						end_date <= %s and
-						company = %s
-						""", (emp['employee'], self.start_date, self.end_date, self.company)):
+						company = %s and
+						salary_slip_type = %s
+						""", (emp['employee'], self.start_date, self.end_date, self.company,self.salary_slip_type)):
 					ss = frappe.get_doc({
 						"doctype": "Salary Slip",
 						"salary_slip_based_on_timesheet": self.salary_slip_based_on_timesheet,

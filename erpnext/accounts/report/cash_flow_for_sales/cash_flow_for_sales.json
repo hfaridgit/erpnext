@@ -8,7 +8,7 @@
  "idx": 0, 
  "is_standard": "Yes", 
  "letter_head": "MIFAD", 
- "modified": "2018-08-13 14:45:00.573499", 
+ "modified": "2018-10-24 13:07:11.717294", 
  "modified_by": "Administrator", 
  "module": "Accounts", 
  "name": "Cash Flow for Sales", 
@@ -18,19 +18,22 @@
  "report_type": "Script Report", 
  "roles": [
   {
-   "role": "Accounts Manager"
+   "role": "Mifad - Accounts Manager"
   }, 
   {
-   "role": "Accounts User"
+   "role": "Mifad - Accounts User"
   }, 
   {
-   "role": "Accountant User"
-  }, 
-  {
-   "role": "Quality Manager"
+   "role": "Mifad - Accounts User"
   }, 
   {
    "role": "System Manager"
+  }, 
+  {
+   "role": "Mifad - Sales User"
+  }, 
+  {
+   "role": "Mifad - Sales Manager"
   }
  ]
 }

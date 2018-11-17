@@ -2,7 +2,7 @@ from frappe import _
 
 def get_data():
 	return {
-		'fieldname': 'lc_no',
+		'fieldname': 'project',
 		'transactions': [
 			{
 				'label': _('Stock'),

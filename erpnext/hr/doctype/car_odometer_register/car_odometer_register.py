@@ -21,4 +21,4 @@ class CarOdometerRegister(Document):
 						(start_date>=%(start_date)s and start_date<=%(end_date)s)) and docstatus=1""", 
 						{"employee": self.employee, "start_date": self.start_date, "end_date": self.end_date}, as_dict=1)
 		if check_exist:
-			frappe.throw(_("A Reading Already Registered Within Those Dates."))
+			frappe.throw(_("A Reading Already Registered Within Those Dates for employe {0}.").format(self.employee))

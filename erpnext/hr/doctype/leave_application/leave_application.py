@@ -35,7 +35,16 @@ class LeaveApplication(Document):
 			self.previous_doc = None
 
 		set_employee_name(self)
-
+		
+		if self.naming_series != '_MIS/':
+			if frappe.db.exists("Employee Transactions",self.employee + '/' + str(self.from_date)) and not self.transaction:
+				frappe.throw(_("Not permitted. Transaction Month is opened."))
+				
+			if frappe.db.exists("Employee Transactions",self.employee + '/' + str(self.to_date)) and not self.transaction:
+				frappe.throw(_("Not permitted. Transaction Month is opened."))
+				
+		self.validate_workflow()
+			
 		self.validate_dates()
 		self.validate_balance_leaves()
 		self.validate_leave_overlap()
@@ -43,12 +52,21 @@ class LeaveApplication(Document):
 		self.show_block_day_warning()
 		self.validate_block_days()
 		self.validate_salary_processed_days()
-		self.validate_leave_approver()
+		if self.naming_series != '_MIS/':
+			self.validate_leave_approver()
 		# self.validate_attendance()
 		self.validate_leave_type()
 		if self.from_time == self.to_time:
 			self.from_time = None
 			self.to_time = None
+			
+	def validate_workflow(self):
+		if self.docstatus==0 and frappe.db.get_value("HR Settings", "apply_leave_workflow") == 1:
+			user_id = frappe.db.get_value("Employee", self.employee, "user_id")
+			if user_id == frappe.session.user:
+				self.workflow_state = "Created"
+			if user_id != frappe.session.user and ("Leave Manager" in frappe.get_roles(frappe.session.user)):
+				self.workflow_state = "Created By Hr User" 
 		
 	def on_update(self):
 		if (not self.previous_doc and self.leave_approver) or (self.previous_doc and \
@@ -61,6 +79,11 @@ class LeaveApplication(Document):
 			frappe.throw(_("Only Leave Applications with status 'Approved' and 'Rejected' can be submitted"))
 
 		self.validate_back_dated_application()
+		
+		frappe.db.sql("""Delete from `tabEmployee Punishment` 
+						where employee=%(employee)s and posting_date>=%(from_date)s and posting_date<=%(to_date)s""", 
+						{"employee": self.employee, "from_date": self.from_date, "to_date": self.to_date})
+		
 
 		# notify leave applier about approval
 		self.notify_employee(self.status)
@@ -198,10 +221,11 @@ class LeaveApplication(Document):
 				self.throw_overlap_error(d)
 
 	def throw_overlap_error(self, d):
-		msg = _("Employee {0} has already applied for {1} between {2} and {3}").format(self.employee,
-			d['leave_type'], formatdate(d['from_date']), formatdate(d['to_date'])) \
-			+ """ <br><b><a href="#Form/Leave Application/{0}">{0}</a></b>""".format(d["name"])
-		frappe.throw(msg, OverlapError)
+		if self.naming_series != '_MIS/':
+			msg = _("Employee {0} has already applied for {1} between {2} and {3}").format(self.employee,
+				d['leave_type'], formatdate(d['from_date']), formatdate(d['to_date'])) \
+				+ """ <br><b><a href="#Form/Leave Application/{0}">{0}</a></b>""".format(d["name"])
+			frappe.throw(msg, OverlapError)
 
 	def get_total_leaves_on_half_day(self):
 		leave_count_on_half_day_date = frappe.db.sql("""select count(name) from `tabLeave Application`
@@ -236,7 +260,7 @@ class LeaveApplication(Document):
 			frappe.throw(_("{0} ({1}) must have role 'Leave Approver'")\
 				.format(get_fullname(self.leave_approver), self.leave_approver), InvalidLeaveApproverError)
 
-		elif self.docstatus==1 and len(leave_approvers) and self.leave_approver != frappe.session.user:
+		elif self.docstatus==1 and len(leave_approvers) and self.leave_approver != frappe.session.user and ("Leave Manager" not in frappe.get_roles(frappe.session.user)):
 			frappe.throw(_("Only the selected Leave Approver can submit this Leave Application"),
 				LeaveApproverIdentityError)
 
@@ -392,12 +416,13 @@ def	check_saturdays(start_date, end_date):
 @frappe.whitelist()
 def get_leave_types(doctype, txt, searchfield, start, page_len, filters):		
 	if filters.get("user_role") and filters.get("user_role") == "user":
-		leaves_list = frappe.db.sql("""select name from ( 
-							select leave_type as name from `tabLeave Allocation`
-							where %(from_date)s between from_date and to_date 
-							and employee=%(employee)s and docstatus=1 and total_leaves_allocated>0
+		leaves_list = frappe.db.sql("""select name from ( select l.leave_type as name from `tabLeave Allocation` l
+							left join `tabLeave Type` t on l.leave_type=t.name
+							where %(from_date)s between l.from_date and l.to_date 
+							and l.employee=%(employee)s and l.docstatus=1 and l.total_leaves_allocated>0
+							and t.is_self_service=1
 							Union all
-							select name from `tabLeave Type` where is_self_service=1) a
+							select name from `tabLeave Type` where is_self_service=1 and default_balance=0) a 
 							where (name like %(txt)s)
 							group by name
 							having 1=1 
@@ -495,6 +520,15 @@ def get_leave_balance_on(employee, leave_type, date, allocation_records=None,
 	leaves_taken = get_approved_leaves_for_period(employee, leave_type, allocation.from_date, date)
 
 	return flt(allocation.total_leaves_allocated) - flt(leaves_taken)
+
+@frappe.whitelist()
+def get_default_approver(employee):
+	leave_approvers = frappe.db.sql("""select leave_approver from `tabEmployee Leave Approver` where parent=%s and idx=1""", (employee), as_dict=1)
+	if leave_approvers:
+		leave_approver = leave_approvers[0].leave_approver
+	else:
+		leave_approver = None
+	return leave_approver
 
 def get_approved_leaves_for_period(employee, leave_type, from_date, to_date):
 	leave_applications = frappe.db.sql("""

@@ -12,7 +12,7 @@ def get_data():
 			},
 			{
 				'label': _('Material'),
-				'items': ['Material Request', 'BOM', 'Stock Entry']
+				'items': ['Material Request', 'BOM', 'Stock Entry', 'Landed Cost Voucher']
 			},
 			{
 				'label': _('Sales'),
@@ -21,6 +21,10 @@ def get_data():
 			{
 				'label': _('Purchase'),
 				'items': ['Purchase Order', 'Purchase Receipt', 'Purchase Invoice']
+			},
+			{
+				'label': _('Accounting'),
+				'items': ['Payment Entry', 'Journal Entry']
 			},
 		]
 	}

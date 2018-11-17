@@ -7,7 +7,7 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2018-05-30 13:12:42.230591", 
+ "modified": "2018-10-21 15:58:11.917273", 
  "modified_by": "Administrator", 
  "module": "Accounts", 
  "name": "Accounts Receivable Summary with Sales Person", 
@@ -17,10 +17,13 @@
  "report_type": "Script Report", 
  "roles": [
   {
-   "role": "Accounts Manager"
+   "role": "Mifad - Accounts Manager"
   }, 
   {
-   "role": "Accounts User"
+   "role": "Mifad - Accounts User"
+  }, 
+  {
+   "role": "Mifad - Sales User"
   }
  ]
 }
